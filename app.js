@@ -1,24 +1,183 @@
 
-const CONFIG={title:"윲깂섮의 자모퀴즈",adminPassword:"1234",maxTries:5,maxPuzzles:150,lockMinutes:10,keyRows:[[..."ㅂㅈㄷㄱㅅㅛㅕㅑ"],[..."ㅁㄴㅇㄹㅎㅗㅓㅏㅣ"],[..."ㅋㅌㅊㅍㅠㅜㅡ"]],winMessages:["오? 니가 짱머거라!","오? 쫌하는데?","흠, 아쉽다?","흠, 안쓰럽네;","ㄹㅇㅋㅋ;"],loseMessage:"^모^"};
-const ACH={streak3:"이제 시작임 ㅋ",firstTry:"오늘은 운수대통! 뭐든 현질 ㄱㄱ~",fail1:"ㅉㅉ",fail2:"음..",streak5:"탄력 좀 받냐?",streak10:"이정돈 해야지",streak50:"뭘 바람?",streak100:"마지막을 향해 서두르세요. 보상이 있습니다.",clear150:"이 또한, 추억이다. 앞으로도 함께할 수 있는 시간이 많기를.. 건강하자"};
-const DEFAULT_PUZZLES=[{answer:"장마철",hint:"계절 관련 단어",no:"001",explain:"장마가 계속되는 시기."},{answer:"태양",hint:"하늘에 있음",no:"002",explain:"스스로 빛을 내는 항성."},{answer:"휴가철",hint:"여름 관련 단어",no:"003",explain:"휴가를 많이 가는 시기."}];
+const CONFIG={
+  title:"윲깂섮의 자모퀴즈",adminPassword:"1234",maxTries:5,maxPuzzles:150,lockMinutes:10,
+  keyRows:[[..."ㅂㅈㄷㄱㅅㅛㅕㅑ"],[..."ㅁㄴㅇㄹㅎㅗㅓㅏㅣ"],[..."ㅋㅌㅊㅍㅠㅜㅡ"]],
+  winMessages:["오? 니가 짱머거라!","오? 쫌하는데?","흠, 아쉽다?","흠, 안쓰럽네;","ㄹㅇㅋㅋ;"],
+  loseMessage:"^모^"
+};
+const ACH={
+  streak3:"이제 시작임 ㅋ",
+  firstTry:"오늘은 운수대통! 뭐든 현질 ㄱㄱ~",
+  fail1:"ㅉㅉ",
+  fail2:"음..",
+  streak5:"탄력 좀 받냐?",
+  streak10:"이정돈 해야지",
+  streak50:"뭘 바람?",
+  streak100:"마지막을 향해 서두르세요. 보상이 있습니다.",
+  clear150:"이 또한, 추억이다. 앞으로도 함께할 수 있는 시간이 많기를.. 건강하자"
+};
+const DEFAULT_PUZZLES=[
+  {answer:"장마철",hint:"계절 관련 단어",no:"001",explain:"장마가 계속되는 시기."},
+  {answer:"태양",hint:"하늘에 있음",no:"002",explain:"스스로 빛을 내는 항성."},
+  {answer:"휴가철",hint:"여름 관련 단어",no:"003",explain:"휴가를 많이 가는 시기."}
+];
 const VOWEL_SPLIT={"ㅐ":["ㅏ","ㅣ"],"ㅒ":["ㅑ","ㅣ"],"ㅔ":["ㅓ","ㅣ"],"ㅖ":["ㅕ","ㅣ"],"ㅘ":["ㅗ","ㅏ"],"ㅙ":["ㅗ","ㅏ","ㅣ"],"ㅚ":["ㅗ","ㅣ"],"ㅝ":["ㅜ","ㅓ"],"ㅞ":["ㅜ","ㅓ","ㅣ"],"ㅟ":["ㅜ","ㅣ"],"ㅢ":["ㅡ","ㅣ"]};
-function b64EncodeUnicode(s){return btoa(unescape(encodeURIComponent(s)))}function b64DecodeUnicode(s){return decodeURIComponent(escape(atob(s)))}function readHashParams(){const r=(location.hash||"").replace(/^#/,""),p={};r.split("&").forEach(x=>{const i=x.indexOf("=");if(i>-1)p[x.slice(0,i)]=x.slice(i+1);else if(x)p[x]=true});return p}function decodeHashValue(k){const v=readHashParams()[k];if(!v||v===true)return null;try{return b64DecodeUnicode(decodeURIComponent(v))}catch(e){return null}}
-function pushVowel(o,v){VOWEL_SPLIT[v]?o.push(...VOWEL_SPLIT[v]):o.push(v)}
-function decomposeHangul(str){const CHO=["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"],JUNG=["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"],JONG=["","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"],FS={"ㄳ":["ㄱ","ㅅ"],"ㄵ":["ㄴ","ㅈ"],"ㄶ":["ㄴ","ㅎ"],"ㄺ":["ㄹ","ㄱ"],"ㄻ":["ㄹ","ㅁ"],"ㄼ":["ㄹ","ㅂ"],"ㄽ":["ㄹ","ㅅ"],"ㄾ":["ㄹ","ㅌ"],"ㄿ":["ㄹ","ㅍ"],"ㅀ":["ㄹ","ㅎ"],"ㅄ":["ㅂ","ㅅ"]};let out=[];for(const ch of String(str).trim()){const code=ch.charCodeAt(0);if(code>=0xAC00&&code<=0xD7A3){const n=code-0xAC00;out.push(CHO[Math.floor(n/588)]);pushVowel(out,JUNG[Math.floor((n%588)/28)]);const jong=JONG[n%28];if(jong)out.push(...(FS[jong]||[jong]))}else if(ch!==" "){VOWEL_SPLIT[ch]?out.push(...VOWEL_SPLIT[ch]):out.push(ch)}}return out}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}function hashString(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(36)}
-function parsePackText(t){return t.split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,CONFIG.maxPuzzles).map((line,i)=>{const p=line.split("|").map(x=>x.trim());return{answer:p[0]||"",hint:p[1]||"",no:p[2]||String(i+1).padStart(3,"0"),explain:p[3]||""}}).filter(p=>p.answer)}function packToText(pack){return pack.map((p,i)=>`${p.answer}${p.hint?"|"+p.hint:""}|${p.no||String(i+1).padStart(3,"0")}${p.explain?"|"+p.explain:""}`).join("\n")}
-function getPackFromHash(){const raw=decodeHashValue("pack");if(!raw)return null;try{const a=JSON.parse(raw);if(Array.isArray(a)&&a.length)return a.slice(0,CONFIG.maxPuzzles)}catch(e){}return null}function getPack(){const hp=getPackFromHash();if(hp){localStorage.setItem("jamoPuzzlePack",JSON.stringify(hp));return hp}try{const s=JSON.parse(localStorage.getItem("jamoPuzzlePack")||"null");if(Array.isArray(s)&&s.length)return s}catch(e){}return DEFAULT_PUZZLES}
-let PUZZLES=getPack(),PACK_ID=hashString(JSON.stringify(PUZZLES));function userKey(n,p){return`jamoUser_${PACK_ID}_${hashString(n+"|"+p)}`}let USER=null;function loadUser(){try{return JSON.parse(localStorage.getItem("jamoCurrentUser")||"null")}catch(e){return null}}function saveCurrentUser(u){localStorage.setItem("jamoCurrentUser",JSON.stringify(u))}function defaultUser(n,p){return{nick:n,pw:p,index:0,success:0,fail:0,totalTries:0,streak:0,bestStreak:0,firstTry:0,ach:[],lockUntil:0,history:[]}}function getUserData(){if(!USER)return null;const raw=localStorage.getItem(userKey(USER.nick,USER.pw));if(raw)try{return JSON.parse(raw)}catch(e){}const u=defaultUser(USER.nick,USER.pw);saveUserData(u);return u}function saveUserData(u){localStorage.setItem(userKey(u.nick,u.pw),JSON.stringify(u));saveCurrentUser({nick:u.nick,pw:u.pw})}
-function currentPuzzle(){const u=getUserData();return PUZZLES[Math.min(u?u.index:0,PUZZLES.length-1)]||DEFAULT_PUZZLES[0]}function getAnswer(){return currentPuzzle().answer}function getHint(){return currentPuzzle().hint||""}function getExplain(){return currentPuzzle().explain||"해설이 등록되지 않았습니다."}function getPuzzleNo(){return currentPuzzle().no||String((getUserData()?.index||0)+1).padStart(3,"0")}
-const app=document.getElementById("app");let ANSWER=[],guesses=[],results=[],current=[],keyStatus={},gameOver=false,lastRevealRow=-1,lockTimer=null;
-function rank(s){return s==="green"?3:s==="yellow"?2:s==="gray"?1:0}function setKeyStatus(ch,s){if(rank(s)>rank(keyStatus[ch]))keyStatus[ch]=s}function emojiRow(r){return r.map(x=>x==="green"?"🟩":x==="yellow"?"🟨":"⬜").join("")}function vibrate(ms=20){if(navigator.vibrate)navigator.vibrate(ms)}function judge(g){let r=Array(ANSWER.length).fill("gray"),u=Array(ANSWER.length).fill(false);for(let i=0;i<ANSWER.length;i++)if(g[i]===ANSWER[i]){r[i]="green";u[i]=true}for(let i=0;i<ANSWER.length;i++){if(r[i]==="green")continue;for(let j=0;j<ANSWER.length;j++)if(!u[j]&&g[i]===ANSWER[j]){r[i]="yellow";u[j]=true;break}}return r}
-function renderLogin(){app.innerHTML=`<div class="screen"><header class="header"><span class="title">${CONFIG.title}</span></header><main class="main"><div class="card"><h2>로그인</h2><input id="nick" placeholder="닉네임"/><input id="pw" placeholder="비밀번호 4자리" type="password"/><button id="loginBtn">시작하기</button><div class="small">같은 닉네임+비밀번호로 접속하면 이어풀기와 통계가 유지됨.<br>현재 버전은 같은 브라우저 기준 저장이야.</div></div></main></div>`;document.getElementById("loginBtn").onclick=()=>{const n=document.getElementById("nick").value.trim(),p=document.getElementById("pw").value.trim();if(!n||!p){alert("닉네임과 비밀번호를 입력해줘.");return}USER={nick:n,pw:p};saveCurrentUser(USER);getUserData();resetRound()}}
-function render(){USER=loadUser();if(!USER){renderLogin();return}ANSWER=decomposeHangul(getAnswer());const u=getUserData(),idx=u.index,hint=getHint(),locked=Date.now()<u.lockUntil;app.innerHTML=`<div class="screen"><header class="header"><span class="leftsub">${escapeHtml(u.nick)}</span><span id="titleTap" class="title">${CONFIG.title}</span><span class="sub">#${escapeHtml(getPuzzleNo())}</span></header><main class="main"><div class="progress">진행률 ${idx+1} / ${PUZZLES.length}</div>${hint?`<div class="hint">힌트: ${escapeHtml(hint)}</div>`:""}${locked?`<div id="lockBox" class="achievement"></div>`:""}<div id="board" class="board"></div><div id="message" class="message"></div><div id="achievementBox"></div><div id="explainBox"></div><div class="controls"><button id="shareBtn" class="share-btn">결과공유</button><button id="nextBtn" class="next-btn">다음 문제</button><button id="statBtn" class="stat-btn">통계</button></div><div id="shareBox" class="share-box"></div></main>${locked?"":`<section class="keyboard-wrap"><div id="inputbar" class="inputbar">글자를 입력하세요</div><div class="keyboard-area"><div id="keyboard" class="keyboard"></div><div class="action-col"><button id="backBtn" class="action">←</button><button id="enterBtn" class="action enter">입력</button></div></div></section>`}<div id="adminModal" class="modal"><div class="modal-card"><h2>관리자 설정</h2><input id="password" type="password" placeholder="비밀번호"/><textarea id="packInput" placeholder="정답|힌트|문제번호|해설"></textarea><div id="packPreview" class="preview"></div><button id="savePack" class="primary">내 화면에 문제팩 저장</button><button id="copyPackLink" class="blue">친구용 문제팩 링크 복사</button><button id="resetAll" class="red">내 로그인/통계 초기화</button><button id="closeAdmin" class="light">닫기</button><div class="small">최대 150문제. 형식: 정답|힌트|문제번호|해설</div></div></div><div id="statsModal" class="modal"><div class="modal-card"><h2>내 통계</h2><div id="statsContent" class="stats"></div><button id="closeStats" class="light">닫기</button></div></div></div>`;bindEvents();drawBoard();if(!locked)drawKeyboard();else startLockCountdown();if(location.hash.includes("admin"))setTimeout(openAdmin,200)}
-function drawBoard(){const b=document.getElementById("board");if(!b)return;b.innerHTML="";for(let r=0;r<CONFIG.maxTries;r++){const row=document.createElement("div");row.className="row";row.style.gridTemplateColumns=`repeat(${ANSWER.length},1fr)`;for(let c=0;c<ANSWER.length;c++){const t=document.createElement("div");t.className="tile";if(guesses[r]){t.textContent=guesses[r][c]||"";t.classList.add("filled",results[r][c]);if(r===lastRevealRow){t.classList.add("reveal");t.style.animationDelay=`${c*80}ms`}}else if(r===guesses.length&&current[c]&&!gameOver){t.textContent=current[c];t.classList.add("pop")}row.appendChild(t)}b.appendChild(row)}updateInputbar()}function drawKeyboard(){const kb=document.getElementById("keyboard");if(!kb)return;kb.innerHTML="";CONFIG.keyRows.forEach(letters=>{const row=document.createElement("div");row.className="keyrow";letters.forEach(ch=>{const x=document.createElement("button");x.className="key "+(keyStatus[ch]||"");x.textContent=ch;x.onclick=()=>pressKey(ch);row.appendChild(x)});kb.appendChild(row)})}function updateInputbar(){const bar=document.getElementById("inputbar");if(!bar)return;bar.textContent=current.length?current.join(""):"글자를 입력하세요";bar.className="inputbar"+(current.length?" active":"")}function setMessage(t){const m=document.getElementById("message");if(m)m.textContent=t}function shakeBoard(){const b=document.getElementById("board");b.classList.remove("shake");void b.offsetWidth;b.classList.add("shake");vibrate(60)}function pressKey(ch){if(!gameOver&&current.length<ANSWER.length){current.push(ch);drawBoard()}}function backspace(){if(!gameOver){current.pop();drawBoard()}}
-function submitGuess(){const u=getUserData();if(Date.now()<u.lockUntil||gameOver)return;if(current.length!==ANSWER.length){setMessage(`${ANSWER.length}칸을 모두 입력해줘.`);shakeBoard();return}const g=[...current],r=judge(g);guesses.push(g);results.push(r);lastRevealRow=guesses.length-1;g.forEach((ch,i)=>setKeyStatus(ch,r[i]));current=[];const ok=g.join("")===ANSWER.join("");if(ok){gameOver=true;u.success++;u.totalTries+=guesses.length;u.streak++;u.bestStreak=Math.max(u.bestStreak,u.streak);u.history.push({no:getPuzzleNo(),ok:true,tries:guesses.length,at:Date.now()});let ach=[];if(guesses.length===1){u.firstTry++;ach.push(addAch(u,ACH.firstTry))}if(u.streak===3)ach.push(addAch(u,ACH.streak3));if(u.streak===5)ach.push(addAch(u,ACH.streak5));if(u.streak===10)ach.push(addAch(u,ACH.streak10));if(u.streak===50)ach.push(addAch(u,ACH.streak50));if(u.streak===100)ach.push(addAch(u,ACH.streak100));if(u.index===PUZZLES.length-1)ach.push(addAch(u,ACH.clear150));saveUserData(u);setMessage(`${guesses.length}/${CONFIG.maxTries} 성공 🎉\n${CONFIG.winMessages[guesses.length-1]}`);showAchievements(ach.filter(Boolean));showEnd(true);vibrate([40,40,80])}else if(guesses.length===CONFIG.maxTries){gameOver=true;u.fail++;u.streak=0;u.lockUntil=Date.now()+CONFIG.lockMinutes*60*1000;u.history.push({no:getPuzzleNo(),ok:false,tries:CONFIG.maxTries,at:Date.now()});let ach=[];if(u.fail===1)ach.push(addAch(u,ACH.fail1));if(u.fail===2)ach.push(addAch(u,ACH.fail2));saveUserData(u);setMessage(CONFIG.loseMessage);showAchievements(ach.filter(Boolean));showExplain();showEnd(false);vibrate([80,30,80])}else{setMessage("");vibrate(20)}drawBoard();drawKeyboard()}
-function addAch(u,msg){if(!u.ach.includes(msg)){u.ach.push(msg);return msg}return null}function showAchievements(arr){const box=document.getElementById("achievementBox");if(arr.length)box.innerHTML=arr.map(x=>`<div class="achievement">업적 달성: ${escapeHtml(x)}</div>`).join("")}function showExplain(){document.getElementById("explainBox").innerHTML=`<div class="explain">정답: ${escapeHtml(getAnswer())}<br>${escapeHtml(getExplain())}</div>`}function showEnd(ok){document.getElementById("shareBtn").style.display="block";const n=document.getElementById("nextBtn");n.style.display="block";if(!ok)n.disabled=true,n.textContent="10분 대기 중";else if(getUserData().index>=PUZZLES.length-1)n.textContent="처음부터";else n.textContent="다음 문제"}function startLockCountdown(){clearInterval(lockTimer);const u=getUserData(),box=document.getElementById("lockBox"),next=document.getElementById("nextBtn");function tick(){const left=u.lockUntil-Date.now();if(left<=0){clearInterval(lockTimer);u.lockUntil=0;saveUserData(u);resetRound();return}const m=Math.floor(left/60000),s=Math.floor((left%60000)/1000);box.textContent=`실패! ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")} 후 다음 문제 가능`;if(next){next.style.display="block";next.disabled=true;next.textContent="대기 중"}}tick();lockTimer=setInterval(tick,1000)}
-async function copyText(text,ok){try{await navigator.clipboard.writeText(text);setMessage(ok)}catch(e){const box=document.getElementById("shareBox");box.style.display="block";box.textContent=text;setMessage("복사가 안 되면 아래 내용을 복사해줘.")}}async function shareResult(){const text=getResultText();if(navigator.share){try{await navigator.share({title:CONFIG.title,text});setMessage("결과공유 완료!");return}catch(e){}}copyText(text,"결과가 복사됐어. 카톡에 붙여넣으면 돼!")}function getResultText(){const u=getUserData(),ok=guesses.length&&guesses[guesses.length-1].join("")===ANSWER.join("");return[`🎯 ${CONFIG.title} #${getPuzzleNo()}`,`닉네임: ${u.nick}`,`진행률 ${u.index+1}/${PUZZLES.length}`,"",`📅 ${new Date().toLocaleDateString("ko-KR")}`,"",...results.map(r=>emojiRow(r)),"",ok?`${guesses.length}/${CONFIG.maxTries} 성공 🎉`:`X/${CONFIG.maxTries} 실패`,ok?CONFIG.winMessages[guesses.length-1]:CONFIG.loseMessage,"","도전하기👇",`${location.origin+location.pathname}#pack=${encodeURIComponent(b64EncodeUnicode(JSON.stringify(PUZZLES)))}`].join("\n")}function nextPuzzle(){const u=getUserData();if(Date.now()<u.lockUntil)return;if(u.index<PUZZLES.length-1)u.index++;else u.index=0;u.lockUntil=0;saveUserData(u);resetRound()}function resetRound(){clearInterval(lockTimer);ANSWER=decomposeHangul(getAnswer());guesses=[];results=[];current=[];keyStatus={};gameOver=false;lastRevealRow=-1;render()}
-function openStats(){const u=getUserData();const avg=u.success?(u.totalTries/u.success).toFixed(2):"-";document.getElementById("statsContent").textContent=`닉네임: ${u.nick}\n진행률: ${u.index+1}/${PUZZLES.length}\n성공: ${u.success}\n실패: ${u.fail}\n성공률: ${u.success+u.fail?Math.round(u.success/(u.success+u.fail)*100):0}%\n평균 시도횟수: ${avg}\n현재 연속 성공: ${u.streak}\n최고 연속 성공: ${u.bestStreak}\n1트 성공: ${u.firstTry}\n\n업적\n${u.ach.length?u.ach.map(x=>"・"+x).join("\n"):"없음"}`;document.getElementById("statsModal").style.display="flex"}function closeStats(){document.getElementById("statsModal").style.display="none"}
-function openAdmin(){document.getElementById("adminModal").style.display="flex";document.getElementById("packInput").value=packToText(PUZZLES);updatePackPreview()}function closeAdmin(){document.getElementById("adminModal").style.display="none"}function checkPw(){if(document.getElementById("password").value!==CONFIG.adminPassword){alert("비밀번호가 틀렸어.");return false}return true}function updatePackPreview(){const arr=parsePackText(document.getElementById("packInput").value);document.getElementById("packPreview").textContent=`등록 예정: ${arr.length}문제 / 최대 ${CONFIG.maxPuzzles}문제`}function savePack(){if(!checkPw())return;const arr=parsePackText(document.getElementById("packInput").value);if(!arr.length){alert("문제를 1개 이상 입력해줘.");return}localStorage.setItem("jamoPuzzlePack",JSON.stringify(arr));PUZZLES=arr;PACK_ID=hashString(JSON.stringify(PUZZLES));const u=getUserData();u.index=0;saveUserData(u);closeAdmin();resetRound();alert("문제팩 저장 완료!")}function copyPackLink(){if(!checkPw())return;const arr=parsePackText(document.getElementById("packInput").value);if(!arr.length){alert("문제를 1개 이상 입력해줘.");return}copyText(`${location.origin+location.pathname}#pack=${encodeURIComponent(b64EncodeUnicode(JSON.stringify(arr)))}`,"친구용 문제팩 링크 복사 완료!")}function resetAll(){if(!checkPw())return;localStorage.clear();location.hash="";location.reload()}
-function bindEvents(){document.getElementById("backBtn")&&(document.getElementById("backBtn").onclick=backspace);document.getElementById("enterBtn")&&(document.getElementById("enterBtn").onclick=submitGuess);document.getElementById("shareBtn").onclick=shareResult;document.getElementById("nextBtn").onclick=nextPuzzle;document.getElementById("statBtn").onclick=openStats;document.getElementById("closeStats").onclick=closeStats;document.getElementById("closeAdmin").onclick=closeAdmin;document.getElementById("savePack").onclick=savePack;document.getElementById("copyPackLink").onclick=copyPackLink;document.getElementById("resetAll").onclick=resetAll;document.getElementById("packInput").oninput=updatePackPreview;let taps=0,timer=null;document.getElementById("titleTap").onclick=()=>{taps++;clearTimeout(timer);timer=setTimeout(()=>taps=0,1200);if(taps>=7){taps=0;openAdmin()}}}document.addEventListener("keydown",e=>{if(e.key==="Enter")submitGuess();else if(e.key==="Backspace")backspace();else if(e.key.length===1)pressKey(e.key)});render();
+
+const $=id=>document.getElementById(id);
+const enc=s=>btoa(unescape(encodeURIComponent(s)));
+const dec=s=>decodeURIComponent(escape(atob(s)));
+function hashParams(){const p={};(location.hash||"").replace(/^#/,"").split("&").forEach(x=>{const i=x.indexOf("=");if(i>-1)p[x.slice(0,i)]=x.slice(i+1);else if(x)p[x]=true});return p}
+function getHash(k){const v=hashParams()[k];if(!v||v===true)return null;try{return dec(decodeURIComponent(v))}catch(e){return null}}
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function hashString(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(36)}
+function decompose(str){
+  const CHO=["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+  const JUNG=["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"];
+  const JONG=["","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+  const FS={"ㄳ":["ㄱ","ㅅ"],"ㄵ":["ㄴ","ㅈ"],"ㄶ":["ㄴ","ㅎ"],"ㄺ":["ㄹ","ㄱ"],"ㄻ":["ㄹ","ㅁ"],"ㄼ":["ㄹ","ㅂ"],"ㄽ":["ㄹ","ㅅ"],"ㄾ":["ㄹ","ㅌ"],"ㄿ":["ㄹ","ㅍ"],"ㅀ":["ㄹ","ㅎ"],"ㅄ":["ㅂ","ㅅ"]};
+  let out=[];
+  for(const ch of String(str).trim()){
+    const code=ch.charCodeAt(0);
+    if(code>=0xAC00&&code<=0xD7A3){
+      const n=code-0xAC00;
+      out.push(CHO[Math.floor(n/588)]);
+      const v=JUNG[Math.floor((n%588)/28)];
+      out.push(...(VOWEL_SPLIT[v]||[v]));
+      const j=JONG[n%28];
+      if(j)out.push(...(FS[j]||[j]));
+    }else if(ch!==" "){out.push(...(VOWEL_SPLIT[ch]||[ch]));}
+  }
+  return out;
+}
+function parsePack(text){
+  return text.split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,CONFIG.maxPuzzles).map((line,i)=>{
+    const p=line.split("|").map(x=>x.trim());
+    return {answer:p[0]||"",hint:p[1]||"",no:p[2]||String(i+1).padStart(3,"0"),explain:p[3]||""};
+  }).filter(x=>x.answer);
+}
+function packText(pack){return pack.map((p,i)=>`${p.answer}|${p.hint||""}|${p.no||String(i+1).padStart(3,"0")}|${p.explain||""}`).join("\n")}
+function loadPack(){
+  const hp=getHash("pack");
+  if(hp){try{const arr=JSON.parse(hp);if(Array.isArray(arr)&&arr.length){localStorage.setItem("jamoPack",JSON.stringify(arr));return arr.slice(0,CONFIG.maxPuzzles)}}catch(e){}}
+  try{const arr=JSON.parse(localStorage.getItem("jamoPack")||"null");if(Array.isArray(arr)&&arr.length)return arr}catch(e){}
+  return DEFAULT_PUZZLES;
+}
+let PACK=loadPack();
+let PACK_ID=hashString(JSON.stringify(PACK));
+let USER=null, round={guesses:[],results:[],current:[],keyStatus:{},gameOver:false,lastReveal:-1};
+function userKey(){return `jamoUser_${PACK_ID}_${hashString(USER.nick+"|"+USER.pw)}`}
+function currentUser(){try{return JSON.parse(localStorage.getItem("jamoCurrentUser")||"null")}catch(e){return null}}
+function saveCurrentUser(u){localStorage.setItem("jamoCurrentUser",JSON.stringify({nick:u.nick,pw:u.pw}))}
+function defaultData(){return{nick:USER.nick,pw:USER.pw,index:0,success:0,fail:0,totalTries:0,streak:0,bestStreak:0,firstTry:0,ach:[],lockUntil:0,history:[]}}
+function data(){let raw=localStorage.getItem(userKey());if(raw)try{return JSON.parse(raw)}catch(e){}let d=defaultData();saveData(d);return d}
+function saveData(d){localStorage.setItem(userKey(),JSON.stringify(d));saveCurrentUser(d)}
+function puzzle(){const d=data();return PACK[Math.min(d.index,PACK.length-1)]||PACK[0]}
+function answer(){return decompose(puzzle().answer)}
+function addAch(d,msg){if(!d.ach.includes(msg)){d.ach.push(msg);return msg}return null}
+function render(){
+  USER=currentUser();
+  if(!USER){renderLogin();return}
+  const d=data(),p=puzzle(),locked=Date.now()<d.lockUntil;
+  document.getElementById("app").innerHTML=`<div class="screen">
+    <header class="header"><span class="left">${esc(d.nick)}</span><span id="titleTap" class="title">${CONFIG.title}</span><span class="right">#${esc(p.no)}</span></header>
+    <main class="main">
+      <div class="progress">진행률 ${d.index+1} / ${PACK.length}</div>
+      ${p.hint?`<div class="hint">힌트: ${esc(p.hint)}</div>`:""}
+      ${locked?`<div id="lockBox" class="ach"></div>`:""}
+      <div id="board" class="board"></div>
+      <div id="msg" class="msg"></div>
+      <div id="achBox"></div>
+      <div id="explainBox"></div>
+      <div class="controls"><button id="shareBtn" style="display:none">결과공유</button><button id="nextBtn" class="next" style="display:none">다음 문제</button><button id="statsBtn">통계</button></div>
+      <div id="sharebox" class="sharebox"></div>
+    </main>
+    ${locked?"":keyboardHtml()}
+    ${adminHtml()}
+    ${statsHtml()}
+  </div>`;
+  bind();
+  drawBoard();
+  if(!locked)drawKeyboard(); else startLock();
+}
+function renderLogin(){
+  document.getElementById("app").innerHTML=`<div class="screen"><header class="header"><span class="title">${CONFIG.title}</span></header>
+  <main class="main"><div class="card"><h2>로그인</h2><input id="nick" placeholder="닉네임"/><input id="pw" type="password" placeholder="비밀번호"/><button id="loginBtn">시작하기</button><div class="small">같은 닉네임+비밀번호로 접속하면 이 기기에서 이어풀기와 통계가 유지됨.</div></div></main></div>`;
+  $("loginBtn").onclick=()=>{const n=$("nick").value.trim(),p=$("pw").value.trim();if(!n||!p){alert("닉네임과 비밀번호를 입력해줘.");return}USER={nick:n,pw:p};saveCurrentUser(USER);data();resetRound();};
+}
+function keyboardHtml(){return `<section class="keyboard-wrap"><div id="inputbar" class="inputbar">글자를 입력하세요</div><div class="keyboard-area"><div id="keyboard" class="keyboard"></div><div class="action-col"><button id="backBtn" class="action">←</button><button id="enterBtn" class="action enter">입력</button></div></div></section>`}
+function adminHtml(){return `<div id="adminModal" class="modal"><div class="card"><h2>관리자</h2><input id="adminPw" type="password" placeholder="관리자 비밀번호"/><textarea id="packInput" placeholder="정답|힌트|문제번호|해설"></textarea><div id="packPreview" class="small"></div><button id="savePack">문제팩 저장</button><button id="copyPack" class="btn blue">친구용 링크 복사</button><button id="resetMe" class="btn red">내 로그인/통계 초기화</button><button id="closeAdmin" class="btn light">닫기</button><div class="small">최대 150문제. 형식: 정답|힌트|문제번호|해설</div></div></div>`}
+function statsHtml(){return `<div id="statsModal" class="modal"><div class="card"><h2>내 통계</h2><div id="statsText" class="small" style="white-space:pre-wrap;font-weight:800;line-height:1.8"></div><button id="closeStats" class="btn light">닫기</button></div></div>`}
+function drawBoard(){
+  const len=answer().length,b=$("board");b.innerHTML="";
+  for(let r=0;r<CONFIG.maxTries;r++){
+    const row=document.createElement("div");row.className="row";row.style.gridTemplateColumns=`repeat(${len},1fr)`;
+    for(let c=0;c<len;c++){
+      const t=document.createElement("div");t.className="tile";
+      if(round.guesses[r]){t.textContent=round.guesses[r][c]||"";t.classList.add("filled",cls(round.results[r][c]));if(r===round.lastReveal)t.classList.add("reveal")}
+      else if(r===round.guesses.length&&round.current[c]&&!round.gameOver){t.textContent=round.current[c];t.classList.add("pop")}
+      row.appendChild(t);
+    }
+    b.appendChild(row);
+  }
+  const bar=$("inputbar");if(bar){bar.textContent=round.current.length?round.current.join(""):"글자를 입력하세요";bar.className="inputbar"+(round.current.length?" active":"")}
+}
+function drawKeyboard(){
+  const kb=$("keyboard");kb.innerHTML="";
+  CONFIG.keyRows.forEach(rowKeys=>{
+    const row=document.createElement("div");row.className="keyrow";
+    rowKeys.forEach(k=>{const b=document.createElement("button");b.className="key "+(round.keyStatus[k]||"");b.textContent=k;b.onclick=()=>press(k);row.appendChild(b)});
+    kb.appendChild(row);
+  });
+}
+function cls(x){return x==="green"?"green":x==="yellow"?"yellow":"gray"}
+function rank(x){return x==="green"?3:x==="yellow"?2:x==="gray"?1:0}
+function setKey(ch,s){if(rank(s)>rank(round.keyStatus[ch]))round.keyStatus[ch]=s}
+function press(k){if(round.gameOver)return; if(round.current.length<answer().length){round.current.push(k);drawBoard()}}
+function back(){if(round.gameOver)return; round.current.pop();drawBoard()}
+function judge(g){
+  const ans=answer();let res=Array(ans.length).fill("gray"),used=Array(ans.length).fill(false);
+  for(let i=0;i<ans.length;i++)if(g[i]===ans[i]){res[i]="green";used[i]=true}
+  for(let i=0;i<ans.length;i++){if(res[i]==="green")continue;for(let j=0;j<ans.length;j++)if(!used[j]&&g[i]===ans[j]){res[i]="yellow";used[j]=true;break}}
+  return res;
+}
+function submit(){
+  const d=data();if(Date.now()<d.lockUntil||round.gameOver)return;
+  if(round.current.length!==answer().length){$("msg").textContent=`${answer().length}칸을 모두 입력해줘.`;shake();return}
+  const g=[...round.current],res=judge(g);round.guesses.push(g);round.results.push(res);round.lastReveal=round.guesses.length-1;g.forEach((ch,i)=>setKey(ch,res[i]));round.current=[];
+  const ok=g.join("")===answer().join("");
+  if(ok){round.gameOver=true;d.success++;d.totalTries+=round.guesses.length;d.streak++;d.bestStreak=Math.max(d.bestStreak,d.streak);d.history.push({no:puzzle().no,ok:true,tries:round.guesses.length,at:Date.now()});let a=[];if(round.guesses.length===1){d.firstTry++;a.push(addAch(d,ACH.firstTry))}if(d.streak===3)a.push(addAch(d,ACH.streak3));if(d.streak===5)a.push(addAch(d,ACH.streak5));if(d.streak===10)a.push(addAch(d,ACH.streak10));if(d.streak===50)a.push(addAch(d,ACH.streak50));if(d.streak===100)a.push(addAch(d,ACH.streak100));if(d.index===PACK.length-1)a.push(addAch(d,ACH.clear150));saveData(d);$("msg").textContent=`${round.guesses.length}/${CONFIG.maxTries} 성공 🎉\n${CONFIG.winMessages[round.guesses.length-1]}`;showAch(a.filter(Boolean));endButtons(true);}
+  else if(round.guesses.length>=CONFIG.maxTries){round.gameOver=true;d.fail++;d.streak=0;d.lockUntil=Date.now()+CONFIG.lockMinutes*60*1000;d.history.push({no:puzzle().no,ok:false,tries:CONFIG.maxTries,at:Date.now()});let a=[];if(d.fail===1)a.push(addAch(d,ACH.fail1));if(d.fail===2)a.push(addAch(d,ACH.fail2));saveData(d);$("msg").textContent=CONFIG.loseMessage;showAch(a.filter(Boolean));$("explainBox").innerHTML=`<div class="explain">정답: ${esc(puzzle().answer)}<br>${esc(puzzle().explain||"해설이 등록되지 않았습니다.")}</div>`;endButtons(false);}
+  else $("msg").textContent="";
+  drawBoard();drawKeyboard();
+}
+function showAch(arr){if(arr.length)$("achBox").innerHTML=arr.map(x=>`<div class="ach">업적 달성: ${esc(x)}</div>`).join("")}
+function endButtons(ok){$("shareBtn").style.display="block";$("nextBtn").style.display="block";if(!ok){$("nextBtn").disabled=true;$("nextBtn").textContent="10분 대기 중"}else $("nextBtn").textContent=data().index>=PACK.length-1?"처음부터":"다음 문제"}
+function startLock(){
+  function tick(){const d=data();let left=d.lockUntil-Date.now();if(left<=0){d.lockUntil=0;saveData(d);resetRound();return}const m=Math.floor(left/60000),s=Math.floor((left%60000)/1000);$("lockBox").textContent=`실패! ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")} 후 다음 문제 가능`;}
+  tick();setInterval(tick,1000);
+}
+function nextPuzzle(){const d=data();if(Date.now()<d.lockUntil)return;d.index=d.index>=PACK.length-1?0:d.index+1;d.lockUntil=0;saveData(d);resetRound()}
+function resetRound(){round={guesses:[],results:[],current:[],keyStatus:{},gameOver:false,lastReveal:-1};render()}
+function shareText(){
+  const d=data(),ok=round.guesses.length&&round.guesses[round.guesses.length-1].join("")===answer().join("");
+  return [`🎯 ${CONFIG.title} #${puzzle().no}`,`닉네임: ${d.nick}`,`진행률 ${d.index+1}/${PACK.length}`,"",new Date().toLocaleDateString("ko-KR"),"",...round.results.map(r=>r.map(x=>x==="green"?"🟩":x==="yellow"?"🟨":"⬜").join("")),"",ok?`${round.guesses.length}/5 성공 🎉`:"X/5 실패",ok?CONFIG.winMessages[round.guesses.length-1]:CONFIG.loseMessage,"",location.origin+location.pathname].join("\n");
+}
+function share(){const t=shareText();if(navigator.share)navigator.share({title:CONFIG.title,text:t}).catch(()=>copy(t));else copy(t)}
+function copy(t){navigator.clipboard.writeText(t).then(()=>$("msg").textContent="복사 완료").catch(()=>{$("sharebox").style.display="block";$("sharebox").textContent=t})}
+function openStats(){const d=data(),total=d.success+d.fail,avg=d.success?(d.totalTries/d.success).toFixed(2):"-";$("statsText").textContent=`닉네임: ${d.nick}\n진행률: ${d.index+1}/${PACK.length}\n성공: ${d.success}\n실패: ${d.fail}\n성공률: ${total?Math.round(d.success/total*100):0}%\n평균 시도횟수: ${avg}\n현재 연속 성공: ${d.streak}\n최고 연속 성공: ${d.bestStreak}\n1트 성공: ${d.firstTry}\n\n업적\n${d.ach.length?d.ach.map(x=>"・"+x).join("\n"):"없음"}`;$("statsModal").style.display="flex"}
+function openAdmin(){$("adminModal").style.display="flex";$("packInput").value=packText(PACK);previewPack()}
+function previewPack(){$("packPreview").textContent=`등록 예정: ${parsePack($("packInput").value).length}문제 / 최대 ${CONFIG.maxPuzzles}문제`}
+function checkAdmin(){if($("adminPw").value!==CONFIG.adminPassword){alert("비밀번호가 틀렸어.");return false}return true}
+function savePack(){if(!checkAdmin())return;const arr=parsePack($("packInput").value);if(!arr.length){alert("문제를 입력해줘.");return}PACK=arr;PACK_ID=hashString(JSON.stringify(PACK));localStorage.setItem("jamoPack",JSON.stringify(PACK));const d=data();d.index=0;d.lockUntil=0;saveData(d);$("adminModal").style.display="none";resetRound();alert("저장 완료")}
+function copyPack(){if(!checkAdmin())return;const arr=parsePack($("packInput").value);const link=`${location.origin+location.pathname}#pack=${encodeURIComponent(enc(JSON.stringify(arr)))}`;copy(link)}
+function resetMe(){if(!checkAdmin())return;localStorage.clear();location.hash="";location.reload()}
+function bind(){
+  if($("backBtn"))$("backBtn").onclick=back;
+  if($("enterBtn"))$("enterBtn").onclick=submit;
+  $("shareBtn").onclick=share;$("nextBtn").onclick=nextPuzzle;$("statsBtn").onclick=openStats;$("closeStats").onclick=()=>$("statsModal").style.display="none";
+  $("closeAdmin").onclick=()=>$("adminModal").style.display="none";$("savePack").onclick=savePack;$("copyPack").onclick=copyPack;$("resetMe").onclick=resetMe;$("packInput").oninput=previewPack;
+  let taps=0,timer=null;$("titleTap").onclick=()=>{taps++;clearTimeout(timer);timer=setTimeout(()=>taps=0,1200);if(taps>=7){taps=0;openAdmin()}};
+}
+function shake(){const b=$("board");b.classList.remove("shake");void b.offsetWidth;b.classList.add("shake")}
+document.addEventListener("keydown",e=>{if(e.key==="Enter")submit();else if(e.key==="Backspace")back();else if(e.key.length===1)press(e.key)});
+render();
