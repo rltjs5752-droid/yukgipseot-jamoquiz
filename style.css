@@ -21,3 +21,39 @@ button,input,textarea{font-family:inherit}button{cursor:pointer}
 .puzzle-list{margin:10px 0;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden}.puzzle-item{display:grid;grid-template-columns:44px 1fr 46px;gap:8px;align-items:center;padding:9px;border-bottom:1px solid #e5e7eb;font-size:13px}.puzzle-item:last-child{border-bottom:0}.puzzle-item b{font-size:13px}.puzzle-item button{margin:0;padding:8px;border-radius:8px;background:#fee2e2;color:#991b1b}.puzzle-meta{color:#6b7280;font-size:12px;margin-top:2px;line-height:1.35}
 .tabs{display:flex;gap:6px;margin:8px 0}.tabs button{margin:0;background:#e5e7eb;color:#111827}.tabs button.active{background:#111827;color:#fff}
 @media(max-width:380px){.key{width:31px;height:41px}.action{width:42px;height:41px}.tile{font-size:19px}.main{padding-left:12px;padding-right:12px}}
+
+.ach-edit-row{
+  display:grid;
+  grid-template-columns:96px 1fr;
+  gap:8px;
+  align-items:center;
+  margin:6px 0;
+}
+.ach-edit-row label{
+  font-size:13px;
+  font-weight:900;
+  color:#374151;
+}
+.ach-edit-row input{margin:0!important}
+.ach-popup{
+  position:fixed;
+  left:50%;
+  top:18px;
+  transform:translateX(-50%);
+  width:min(360px,calc(100% - 32px));
+  background:#111827;
+  color:white;
+  border-radius:18px;
+  padding:16px;
+  z-index:30;
+  box-shadow:0 18px 60px rgba(0,0,0,.28);
+  text-align:center;
+  animation:achPop 1.8s ease both;
+}
+.ach-popup b{display:block;font-size:18px;margin-top:6px}
+@keyframes achPop{
+  0%{opacity:0;transform:translateX(-50%) translateY(-16px) scale(.95)}
+  15%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+  85%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+  100%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.98)}
+}

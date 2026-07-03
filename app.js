@@ -84,6 +84,35 @@ function parseAchText(text){
   });
   return out;
 }
+function achLabels(){
+  return [
+    ["firstTry","1번 만에 성공"],
+    ["fail1","첫 실패"],
+    ["fail2","두 번째 실패"],
+    ["streak3","3연속 성공"],
+    ["streak5","5연속 성공"],
+    ["streak10","10연속 성공"],
+    ["streak50","50연속 성공"],
+    ["streak100","100연속 성공"],
+    ["clear150","150문제 클리어"]
+  ];
+}
+function renderAchievementEditor(){
+  return achLabels().map(([key,label])=>`
+    <div class="ach-edit-row">
+      <label>${label}</label>
+      <input id="ach_${key}" data-achkey="${key}" value="${esc(ACH[key]||"")}" />
+    </div>
+  `).join("");
+}
+function readAchievementEditor(){
+  const out={};
+  document.querySelectorAll("[data-achkey]").forEach(el=>{
+    out[el.dataset.achkey]=el.value.trim();
+  });
+  return out;
+}
+
 
 function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function hashString(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(36)}
@@ -181,12 +210,16 @@ function adminHtml(){return `<div id="adminModal" class="modal"><div class="card
     <div id="packPreview" class="small"></div>
   </div>
   <div id="settingBox" style="display:none">
-    <div class="small">성공 멘트는 1트~5트 순서로 한 줄씩 입력</div>
-    <textarea id="winMsgInput" placeholder="1트 성공 멘트\n2트 성공 멘트\n3트 성공 멘트\n4트 성공 멘트\n5트 성공 멘트"></textarea>
-    <div class="small">업적 문구는 key|문구 형식</div>
-    <textarea id="achInput" placeholder="firstTry|오늘은 운수대통!\nstreak3|이제 시작임 ㅋ"></textarea>
+    <div class="small">성공 멘트</div>
+    <div class="ach-edit-row"><label>1트 성공</label><input id="win_0" /></div>
+    <div class="ach-edit-row"><label>2트 성공</label><input id="win_1" /></div>
+    <div class="ach-edit-row"><label>3트 성공</label><input id="win_2" /></div>
+    <div class="ach-edit-row"><label>4트 성공</label><input id="win_3" /></div>
+    <div class="ach-edit-row"><label>5트 성공</label><input id="win_4" /></div>
+    <div class="small" style="margin-top:12px">업적 문구</div>
+    <div id="achEditor"></div>
   </div>
-  <button id="savePack">문제팩 저장</button>
+    <button id="savePack">문제팩 저장</button>
   <button id="copyPack" class="btn blue">친구용 링크 복사</button>
   <button id="resetMe" class="btn red">내 로그인/통계 초기화</button>
   <button id="closeAdmin" class="btn light">닫기</button>
@@ -237,7 +270,16 @@ function submit(){
   else {$("msg").textContent=""; if(!beforeHint && shouldShowHint() && puzzle().hint) round.hintJustOpened=true;}
   if(round.hintJustOpened) render(); else {drawBoard();drawKeyboard();}
 }
-function showAch(arr){if(arr.length)$("achBox").innerHTML=arr.map(x=>`<div class="ach">업적 달성: ${esc(x)}</div>`).join("")}
+function showAch(arr){
+  if(arr.length){
+    $("achBox").innerHTML=arr.map(x=>`<div class="ach">업적 달성: ${esc(x)}</div>`).join("");
+    const pop=document.createElement("div");
+    pop.className="ach-popup";
+    pop.innerHTML=`🏆 업적 달성!<b>${esc(arr[0])}</b>`;
+    document.body.appendChild(pop);
+    setTimeout(()=>pop.remove(),1900);
+  }
+}
 function endButtons(ok){$("shareBtn").style.display="block";$("nextBtn").style.display="block";if(!ok){$("nextBtn").disabled=true;$("nextBtn").textContent="10분 대기 중"}else $("nextBtn").textContent=data().index>=PACK.length-1?"처음부터":"다음 문제"}
 function startLock(){
   function tick(){const d=data();let left=d.lockUntil-Date.now();if(left<=0){d.lockUntil=0;saveData(d);resetRound();return}const m=Math.floor(left/60000),s=Math.floor((left%60000)/1000);$("lockBox").textContent=`실패! ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")} 후 다음 문제 가능`;}
@@ -256,8 +298,8 @@ function openAdmin(){
   ADMIN_DRAFT=[...PACK];
   $("adminModal").style.display="flex";
   $("packInput").value=packText(ADMIN_DRAFT);
-  if($("winMsgInput")) $("winMsgInput").value=CONFIG.winMessages.join("\n");
-  if($("achInput")) $("achInput").value=achText();
+  for(let i=0;i<5;i++){ if($("win_"+i)) $("win_"+i).value=CONFIG.winMessages[i]||""; }
+  if($("achEditor")) $("achEditor").innerHTML=renderAchievementEditor();
   renderPuzzleList();
   previewPack();
 }
@@ -282,8 +324,8 @@ function savePack(){
   const activeBulk=$("bulkBox").style.display!=="none";
   const arr=activeBulk?parsePack($("packInput").value):ADMIN_DRAFT;
   if(!arr.length){alert("문제를 입력해줘.");return}
-  const winLines=($("winMsgInput")?.value||"").split(/\n+/).map(x=>x.trim()).filter(Boolean);
-  const achMap=parseAchText($("achInput")?.value||"");
+  const winLines=[0,1,2,3,4].map(i=>($("win_"+i)?.value||"").trim());
+  const achMap=readAchievementEditor();
   const settings={winMessages:CONFIG.winMessages.map((x,i)=>winLines[i]||x), ach:{...ACH,...achMap}};
   localStorage.setItem("jamoSettings",JSON.stringify(settings));
   applySettings();
@@ -293,8 +335,8 @@ function savePack(){
 function copyPack(){
   if(!checkAdmin())return;
   const arr=($("bulkBox").style.display!=="none")?parsePack($("packInput").value):ADMIN_DRAFT;
-  const winLines=($("winMsgInput")?.value||"").split(/\n+/).map(x=>x.trim()).filter(Boolean);
-  const achMap=parseAchText($("achInput")?.value||"");
+  const winLines=[0,1,2,3,4].map(i=>($("win_"+i)?.value||"").trim());
+  const achMap=readAchievementEditor();
   const settings={winMessages:CONFIG.winMessages.map((x,i)=>winLines[i]||x), ach:{...ACH,...achMap}};
   const link=`${location.origin+location.pathname}#pack=${encodeURIComponent(enc(JSON.stringify(arr)))}&cfg=${encodeURIComponent(enc(JSON.stringify(settings)))}`;
   copy(link)
