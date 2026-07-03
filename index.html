@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>윲깂섮의 자모퀴즈</title>
+<style>
+  :root{--green:#79c96f;--yellow:#ffd966;--gray:#bfc1c4;--bg:#f5f6f8;--text:#111827}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);display:flex;justify-content:center}
+  .phone{width:min(430px,100%);min-height:100vh;background:white;display:flex;flex-direction:column}
+  header{height:42px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;user-select:none}
+  main{padding:8px 18px 0;flex:1}
+  .board{display:grid;gap:10px;margin:2px auto 20px;max-width:390px}
+  .row{display:grid;gap:7px}
+  .tile{aspect-ratio:1;border:1px solid #d8dadd;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:900;background:white}
+  .tile.filled{border:none}
+  .green{background:var(--green)!important;border-color:var(--green)!important}
+  .yellow{background:var(--yellow)!important;border-color:var(--yellow)!important}
+  .gray{background:var(--gray)!important;border-color:var(--gray)!important}
+  .keyboard-wrap{background:#f0f1f3;padding:14px 10px 18px;margin-top:auto}
+  .inputbar{margin:0 auto 12px;max-width:390px;background:#e9eaec;color:#a1a1aa;border-radius:16px;height:52px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+  .inputbar.active{color:#111827;background:#eef2f7}
+  .keyboard-area{max-width:410px;margin:0 auto;display:flex;align-items:flex-start;justify-content:center;gap:6px}
+  .keyboard{display:grid;gap:8px;justify-items:center}
+  .keyrow{display:flex;gap:6px;justify-content:center}
+  .key{width:34px;height:43px;border:0;border-radius:7px;background:white;font-size:20px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .action-col{display:flex;flex-direction:column;gap:8px}
+  .action{width:46px;height:43px;border:0;border-radius:7px;background:white;font-size:18px;font-weight:900;cursor:pointer}
+  .enter{font-size:13px}
+  .msg{text-align:center;min-height:24px;margin:4px 0 10px;color:#374151;font-weight:900}
+  .controls{display:flex;gap:8px;margin:8px auto 4px;max-width:360px}
+  .controls button{flex:1;border:0;border-radius:10px;padding:12px;font-weight:900;background:#e5e7eb}
+  #shareBtn{display:none}
+  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;padding:20px;z-index:10}
+  .box{width:min(390px,100%);background:white;border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  .box h2{margin:0 0 12px;font-size:18px}
+  .box input{width:100%;padding:13px;border:1px solid #d1d5db;border-radius:12px;font-size:17px;text-align:center;margin:6px 0 10px}
+  .box button{width:100%;border:0;border-radius:12px;padding:12px;margin-top:7px;font-weight:900}
+  .primary{background:#111827;color:white}.light{background:#e5e7eb}.blue{background:#bae6fd}
+  .small{font-size:12px;color:#6b7280;line-height:1.5;margin-top:8px}
+  .share{display:none;white-space:pre-wrap;background:#111827;color:white;padding:12px;border-radius:12px;margin:8px;font-family:monospace}
+</style>
+</head>
+<body>
+<div class="phone">
+  <header id="title">윲깂섮의 자모퀴즈</header>
+  <main>
+    <div id="board" class="board"></div>
+    <div id="msg" class="msg"></div>
+    <div class="controls">
+      <button id="shareBtn" onclick="shareResult()">결과공유</button>
+    </div>
+    <div id="share" class="share"></div>
+  </main>
+  <section class="keyboard-wrap">
+    <div id="inputbar" class="inputbar">글자를 입력하세요</div>
+    <div class="keyboard-area">
+      <div class="keyboard" id="keyboard"></div>
+      <div class="action-col">
+        <button class="action" onclick="backspace()">←</button>
+        <button class="action enter" onclick="submitGuess()">입력</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="adminModal">
+  <div class="box">
+    <h2>관리자 설정</h2>
+    <input id="password" type="password" placeholder="비밀번호" />
+    <input id="answerInput" placeholder="정답 입력 예: 태양 / 장마철" />
+    <button class="primary" onclick="saveAnswer()">내 화면에 정답 저장</button>
+    <button class="blue" onclick="copyPlayLink()">친구용 문제 링크 복사</button>
+    <button class="light" onclick="closeAdmin()">닫기</button>
+    <div class="small">
+      관리자 열기: 제목을 7번 연속 터치하거나 주소 끝에 <b>#admin</b> 입력.<br>
+      기본 비밀번호: <b>1234</b><br>
+      결과공유는 카톡에 바로 붙여넣기 좋은 텍스트로 복사됨.
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_ANSWER = "장마철";
+const ADMIN_PASSWORD = "1234";
+const MAX_TRIES = 5;
+
+const KEY_ROWS = [
+  [..."ㅂㅈㄷㄱㅅㅛㅕㅑ"],
+  [..."ㅁㄴㅇㄹㅎㅗㅓㅏㅣ"],
+  [..."ㅋㅌㅊㅍㅠㅜㅡ"]
+];
+
+const WIN_MESSAGES = [
+  "오? 니가 짱머거라!",
+  "오? 쫌하는데?",
+  "흠, 아쉽다?",
+  "흠, 안쓰럽네;",
+  "ㄹㅇㅋㅋ;"
+];
+
+const VOWEL_SPLIT = {
+  "ㅐ":["ㅏ","ㅣ"], "ㅒ":["ㅑ","ㅣ"], "ㅔ":["ㅓ","ㅣ"], "ㅖ":["ㅕ","ㅣ"],
+  "ㅘ":["ㅗ","ㅏ"], "ㅙ":["ㅗ","ㅏ","ㅣ"], "ㅚ":["ㅗ","ㅣ"],
+  "ㅝ":["ㅜ","ㅓ"], "ㅞ":["ㅜ","ㅓ","ㅣ"], "ㅟ":["ㅜ","ㅣ"],
+  "ㅢ":["ㅡ","ㅣ"]
+};
+
+function b64EncodeUnicode(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64DecodeUnicode(str){ return decodeURIComponent(escape(atob(str))); }
+
+function readHashParams(){
+  const raw = (location.hash || "").replace(/^#/, "");
+  const params = {};
+  raw.split("&").forEach(part => {
+    const [k, v] = part.split("=");
+    if(k && v) params[k] = v;
+  });
+  return params;
+}
+function decodeHashValue(key){
+  const v = readHashParams()[key];
+  if(!v) return null;
+  try { return b64DecodeUnicode(decodeURIComponent(v)); } catch(e){ return null; }
+}
+function getParamAnswer(){ return decodeHashValue("q"); }
+function getParamResult(){ return decodeHashValue("r"); }
+
+function pushVowel(out, v){
+  if(VOWEL_SPLIT[v]) out.push(...VOWEL_SPLIT[v]);
+  else out.push(v);
+}
+
+function decomposeHangul(str){
+  const CHO = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+  const JUNG = ["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"];
+  const JONG = ["","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+  const FINAL_SPLIT = {"ㄳ":["ㄱ","ㅅ"],"ㄵ":["ㄴ","ㅈ"],"ㄶ":["ㄴ","ㅎ"],"ㄺ":["ㄹ","ㄱ"],"ㄻ":["ㄹ","ㅁ"],"ㄼ":["ㄹ","ㅂ"],"ㄽ":["ㄹ","ㅅ"],"ㄾ":["ㄹ","ㅌ"],"ㄿ":["ㄹ","ㅍ"],"ㅀ":["ㄹ","ㅎ"],"ㅄ":["ㅂ","ㅅ"]};
+  let out = [];
+  for(const ch of str.trim()){
+    const code = ch.charCodeAt(0);
+    if(code >= 0xAC00 && code <= 0xD7A3){
+      const n = code - 0xAC00;
+      out.push(CHO[Math.floor(n/588)]);
+      pushVowel(out, JUNG[Math.floor((n%588)/28)]);
+      const jong = JONG[n%28];
+      if(jong) out.push(...(FINAL_SPLIT[jong] || [jong]));
+    }else if(ch !== " "){
+      if(VOWEL_SPLIT[ch]) out.push(...VOWEL_SPLIT[ch]);
+      else out.push(ch);
+    }
+  }
+  return out;
+}
+
+function getRawAnswer(){
+  return getParamAnswer() || localStorage.getItem("jamoAnswer") || DEFAULT_ANSWER;
+}
+
+let ANSWER = decomposeHangul(getRawAnswer());
+let guesses = [], results = [], current = [], keyStatus = {};
+let gameOver = false;
+
+function gridCols(){ return `repeat(${ANSWER.length},1fr)`; }
+
+function makeBoard(){
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+  for(let r=0;r<MAX_TRIES;r++){
+    const row = document.createElement("div");
+    row.className = "row";
+    row.style.gridTemplateColumns = gridCols();
+    for(let c=0;c<ANSWER.length;c++){
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      if(guesses[r]){
+        tile.textContent = guesses[r][c] || "";
+        tile.classList.add("filled", results[r][c]);
+      } else if(r === guesses.length && current[c] && !gameOver){
+        tile.textContent = current[c];
+      }
+      row.appendChild(tile);
+    }
+    board.appendChild(row);
+  }
+  updateInputbar();
+}
+
+function makeKeyboard(){
+  const kb = document.getElementById("keyboard");
+  kb.innerHTML = "";
+  KEY_ROWS.forEach(letters => {
+    const row = document.createElement("div");
+    row.className = "keyrow";
+    letters.forEach(ch => {
+      const b = document.createElement("button");
+      b.className = "key " + (keyStatus[ch] || "");
+      b.textContent = ch;
+      b.onclick = () => pressKey(ch);
+      row.appendChild(b);
+    });
+    kb.appendChild(row);
+  });
+}
+
+function pressKey(ch){
+  if(gameOver) return;
+  if(current.length < ANSWER.length){ current.push(ch); makeBoard(); }
+}
+function backspace(){
+  if(gameOver) return;
+  current.pop(); makeBoard();
+}
+function updateInputbar(){
+  const bar = document.getElementById("inputbar");
+  bar.textContent = current.length ? current.join("") : "글자를 입력하세요";
+  bar.className = "inputbar" + (current.length ? " active" : "");
+}
+function rank(s){ return s==="green"?3:s==="yellow"?2:s==="gray"?1:0; }
+function setKeyStatus(ch,s){ if(rank(s)>rank(keyStatus[ch])) keyStatus[ch]=s; }
+
+function judge(guess){
+  let res = Array(ANSWER.length).fill("gray"), used = Array(ANSWER.length).fill(false);
+  for(let i=0;i<ANSWER.length;i++){
+    if(guess[i] === ANSWER[i]){ res[i]="green"; used[i]=true; }
+  }
+  for(let i=0;i<ANSWER.length;i++){
+    if(res[i]==="green") continue;
+    for(let j=0;j<ANSWER.length;j++){
+      if(!used[j] && guess[i] === ANSWER[j]){ res[i]="yellow"; used[j]=true; break; }
+    }
+  }
+  return res;
+}
+
+function submitGuess(){
+  const msg = document.getElementById("msg");
+  if(gameOver) return;
+  if(current.length !== ANSWER.length){ msg.textContent = `${ANSWER.length}칸을 모두 입력해줘.`; return; }
+
+  const guess = [...current], res = judge(guess);
+  guesses.push(guess); results.push(res);
+  guess.forEach((ch,i)=>setKeyStatus(ch,res[i]));
+  current = []; msg.textContent = "";
+
+  if(guess.join("") === ANSWER.join("")){
+    gameOver = true;
+    msg.textContent = `${guesses.length}/5 성공 🎉 ${WIN_MESSAGES[guesses.length-1]}`;
+    document.getElementById("shareBtn").style.display = "block";
+  }else if(guesses.length === MAX_TRIES){
+    gameOver = true;
+    msg.textContent = "^모^";
+    document.getElementById("shareBtn").style.display = "block";
+  }
+
+  makeBoard(); makeKeyboard(); updateShare();
+}
+
+function emojiRow(res){ return res.map(x=>x==="green"?"🟩":x==="yellow"?"🟨":"⬜").join(""); }
+
+function getResultText(){
+  const success = guesses.length && guesses[guesses.length-1].join("") === ANSWER.join("");
+  const lines = ["🎯 윲깂섮의 자모퀴즈",""];
+  results.forEach(r=>lines.push(emojiRow(r)));
+  lines.push("");
+  lines.push(success ? `${guesses.length}/5 성공` : "실패 ^모^");
+  if(success) lines.push(WIN_MESSAGES[guesses.length-1]);
+  return lines.join("\n");
+}
+
+function updateShare(){
+  document.getElementById("share").textContent = getResultText();
+}
+
+async function copyText(text, okMsg){
+  try{ await navigator.clipboard.writeText(text); document.getElementById("msg").textContent = okMsg; }
+  catch(e){
+    document.getElementById("share").style.display="block";
+    document.getElementById("share").textContent=text;
+    document.getElementById("msg").textContent = "복사가 안 되면 아래 내용을 복사해줘.";
+  }
+}
+
+async function shareResult(){
+  updateShare();
+  const text = getResultText();
+
+  if(navigator.share){
+    try{
+      await navigator.share({title:"윲깂섮의 자모퀴즈", text:text});
+      document.getElementById("msg").textContent = "결과공유 완료!";
+      return;
+    }catch(e){}
+  }
+
+  copyText(text, "결과가 복사됐어. 카톡에 붙여넣으면 돼!");
+}
+
+function resetGame(){
+  guesses=[]; results=[]; current=[]; keyStatus={}; gameOver=false; ANSWER=decomposeHangul(getRawAnswer());
+  document.getElementById("msg").textContent=""; 
+  document.getElementById("share").style.display="none";
+  document.getElementById("shareBtn").style.display = "none";
+  makeBoard(); makeKeyboard();
+}
+
+function openAdmin(){ document.getElementById("adminModal").style.display="flex"; }
+function closeAdmin(){ document.getElementById("adminModal").style.display="none"; }
+function saveAnswer(){
+  const pw = document.getElementById("password").value;
+  const raw = document.getElementById("answerInput").value.trim();
+  if(pw !== ADMIN_PASSWORD){ alert("비밀번호가 틀렸어."); return; }
+  if(!raw){ alert("정답을 입력해줘."); return; }
+  localStorage.setItem("jamoAnswer", raw);
+  history.replaceState(null, "", location.pathname);
+  closeAdmin(); resetGame(); alert("정답 저장 완료!");
+}
+function copyPlayLink(){
+  const pw = document.getElementById("password").value;
+  const raw = document.getElementById("answerInput").value.trim() || localStorage.getItem("jamoAnswer") || DEFAULT_ANSWER;
+  if(pw !== ADMIN_PASSWORD){ alert("비밀번호가 틀렸어."); return; }
+  const base = location.origin + location.pathname;
+  const code = encodeURIComponent(b64EncodeUnicode(raw));
+  copyText(base + "#q=" + code, "친구용 문제 URL 복사 완료!");
+}
+
+function showSharedResultIfAny(){
+  const r = getParamResult();
+  if(r){
+    document.querySelector("main").innerHTML = `
+      <div class="msg">공유된 결과</div>
+      <div class="share" style="display:block">${r.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>
+    `;
+    document.querySelector(".keyboard-wrap").style.display = "none";
+  }
+}
+
+let titleTap = 0, titleTimer = null;
+document.getElementById("title").addEventListener("click", () => {
+  titleTap++;
+  clearTimeout(titleTimer);
+  titleTimer = setTimeout(()=>titleTap=0, 1200);
+  if(titleTap >= 7){ titleTap = 0; openAdmin(); }
+});
+if(location.hash.includes("admin")) setTimeout(openAdmin, 200);
+
+document.addEventListener("keydown", e=>{
+  if(e.key==="Enter") submitGuess();
+  else if(e.key==="Backspace") backspace();
+  else if(e.key.length===1) pressKey(e.key);
+});
+
+if(getParamResult()){
+  showSharedResultIfAny();
+}else{
+  makeBoard(); makeKeyboard();
+}
+</script>
+</body>
+</html>
