@@ -6,27 +6,89 @@ const CONFIG={
   loseMessage:"^모^"
 };
 const ACH={
+  firstClear:"드디어 시작이다.",
   streak3:"이제 시작임 ㅋ",
-  firstTry:"오늘은 운수대통! 뭐든 현질 ㄱㄱ~",
-  fail1:"ㅉㅉ",
-  fail2:"음..",
   streak5:"탄력 좀 받냐?",
-  streak10:"이정돈 해야지",
+  streak10:"이정돈 해야지.",
+  streak20:"자모 좀 치네?",
+  streak30:"사람이 맞나?",
   streak50:"뭘 바람?",
-  streak100:"마지막을 향해 서두르세요. 보상이 있습니다.",
-  clear150:"이 또한, 추억이다. 앞으로도 함께할 수 있는 시간이 많기를.. 건강하자"
+  streak100:"마지막을 향해 서두르세요.",
+  clear150:"이 또한, 추억이다.",
+  fail1:"ㅉㅉ",
+  failStreak2:"음..",
+  failStreak3:"집중 안 하냐?",
+  failStreak5:"오늘 컨디션 안 좋은 듯?",
+  failStreak10:"그냥 내일 다시 와.",
+  speed5:"손보다 뇌가 빠르다.",
+  speed3:"사람 맞음?",
+  speed2:"검색했지?",
+  speed1:"운영자 아니냐?",
+  noHintSuccess:"감 좋네.",
+  noHint10:"힌트가 필요 없는 남자.",
+  hintSuccess:"그래도 맞췄네.",
+  hintFail:"힌트도 울고 간다.",
+  nearOne:"진짜 아깝다.",
+  waitSuccess:"포기 안 했네.",
+  revengeSuccess:"복수 성공.",
+  firstTryStreak5:"감각 살아있네.",
+  firstTryStreak10:"오늘 각성했다.",
+  firstPuzzle8:"시작부터 하드모드.",
+  lastPuzzle2:"허무한 엔딩.",
+  firstVisit:"어서 와.",
+  visit100:"거의 직원인데?",
+  lateNight:"잠은?",
+  commute:"일 안 하냐?",
+  lunch:"밥은 먹고 해.",
+  rainy:"오늘도 장마철.",
+  christmas:"혼자냐?",
+  birthday:"생일 축하한다.",
+  allNoHint:"미쳤다.",
+  allFirstTry:"제작자도 못 함.",
+  perfect150:"자모의 신."
 };
 
 const ACH_META={
-  firstTry:{label:"1번 만에 성공",grade:"일반"},
-  fail1:{label:"첫 실패",grade:"일반"},
-  fail2:{label:"두 번째 실패",grade:"일반"},
+  firstClear:{label:"첫 문제 클리어",grade:"일반"},
   streak3:{label:"3연속 성공",grade:"일반"},
   streak5:{label:"5연속 성공",grade:"일반"},
   streak10:{label:"10연속 성공",grade:"희귀"},
+  streak20:{label:"20연속 성공",grade:"희귀"},
+  streak30:{label:"30연속 성공",grade:"희귀"},
   streak50:{label:"50연속 성공",grade:"영웅"},
   streak100:{label:"100연속 성공",grade:"영웅"},
-  clear150:{label:"150문제 클리어",grade:"전설"}
+  clear150:{label:"150문제 클리어",grade:"전설"},
+  fail1:{label:"첫 실패",grade:"일반"},
+  failStreak2:{label:"2연속 실패",grade:"일반"},
+  failStreak3:{label:"3연속 실패",grade:"일반"},
+  failStreak5:{label:"5연속 실패",grade:"희귀"},
+  failStreak10:{label:"10연속 실패",grade:"영웅"},
+  speed5:{label:"5초 안에 성공",grade:"희귀"},
+  speed3:{label:"3초 안에 성공",grade:"희귀"},
+  speed2:{label:"2초 안에 성공",grade:"영웅"},
+  speed1:{label:"1초 안에 성공",grade:"전설"},
+  noHintSuccess:{label:"힌트 없이 성공",grade:"일반"},
+  noHint10:{label:"힌트 없이 10문제 연속",grade:"희귀"},
+  hintSuccess:{label:"힌트 보고 성공",grade:"일반"},
+  hintFail:{label:"힌트 보고도 실패",grade:"일반"},
+  nearOne:{label:"한 글자 차이",grade:"일반"},
+  waitSuccess:{label:"10분 대기 후 성공",grade:"일반"},
+  revengeSuccess:{label:"실패 후 바로 성공",grade:"희귀"},
+  firstTryStreak5:{label:"5문제 연속 첫 시도 성공",grade:"희귀"},
+  firstTryStreak10:{label:"10문제 연속 첫 시도 성공",grade:"영웅"},
+  firstPuzzle8:{label:"첫 문제가 8글자",grade:"일반"},
+  lastPuzzle2:{label:"마지막 문제가 2글자",grade:"일반"},
+  firstVisit:{label:"첫 접속",grade:"일반"},
+  visit100:{label:"100번째 접속",grade:"희귀"},
+  lateNight:{label:"새벽 2~5시 플레이",grade:"일반"},
+  commute:{label:"출근시간 8~9시",grade:"일반"},
+  lunch:{label:"점심시간",grade:"일반"},
+  rainy:{label:"비 오는 날/장마 단어",grade:"일반"},
+  christmas:{label:"크리스마스 접속",grade:"희귀"},
+  birthday:{label:"생일 접속",grade:"희귀"},
+  allNoHint:{label:"전 문제 힌트 없이 클리어",grade:"전설"},
+  allFirstTry:{label:"150문제 전부 첫 시도 성공",grade:"전설"},
+  perfect150:{label:"150문제 100% 성공",grade:"전설"}
 };
 
 const DEFAULT_PUZZLES=[
@@ -185,16 +247,36 @@ applySettings();
 let PACK=loadPack();
 let ADMIN_DRAFT=[...PACK];
 let PACK_ID=hashString(JSON.stringify(PACK));
-let USER=null, SESSION_USER=null, round={guesses:[],results:[],current:[],keyStatus:{},gameOver:false,lastReveal:-1,hintJustOpened:false};
+let USER=null, SESSION_USER=null, round={guesses:[],results:[],current:[],keyStatus:{},gameOver:false,lastReveal:-1,hintJustOpened:false,startedAt:Date.now()};
 function userKey(){return `jamoUser_${PACK_ID}_${hashString(USER.nick+"|"+USER.pw)}`}
 function currentUser(){return SESSION_USER}
 function saveCurrentUser(u){SESSION_USER={nick:u.nick,pw:u.pw}}
-function defaultData(){return{nick:USER.nick,pw:USER.pw,index:0,success:0,fail:0,totalTries:0,streak:0,bestStreak:0,firstTry:0,ach:[],lockUntil:0,history:[]}}
-function data(){let raw=localStorage.getItem(userKey());if(raw)try{return JSON.parse(raw)}catch(e){}let d=defaultData();saveData(d);return d}
+function defaultData(){return{nick:USER.nick,pw:USER.pw,index:0,success:0,fail:0,totalTries:0,streak:0,bestStreak:0,firstTry:0,firstTryStreak:0,failStreak:0,noHintStreak:0,ach:[],achKeys:[],lockUntil:0,history:[],visits:0,wasLocked:false,lastFailed:false,allNoHint:true,allFirstTry:true,allSuccess:true}}
+function data(){
+  let raw=localStorage.getItem(userKey());
+  if(raw)try{
+    let d=JSON.parse(raw);
+    const def=defaultData();
+    Object.keys(def).forEach(k=>{if(d[k]===undefined)d[k]=def[k];});
+    return d;
+  }catch(e){}
+  let d=defaultData();saveData(d);return d;
+}
 function saveData(d){localStorage.setItem(userKey(),JSON.stringify(d));saveCurrentUser(d)}
 function puzzle(){const d=data();return PACK[Math.min(d.index,PACK.length-1)]||PACK[0]}
 function answer(){return decompose(puzzle().answer)}
-function addAch(d,msg){if(!msg)return null;if(!d.ach.includes(msg)){d.ach.push(msg);return msg}return null}
+function addAch(d,key){
+  const msg=ACH[key];
+  if(!msg)return null;
+  if(!d.achKeys)d.achKeys=[];
+  if(!d.ach)d.ach=[];
+  if(!d.achKeys.includes(key)){
+    d.achKeys.push(key);
+    d.ach.push(msg);
+    return msg;
+  }
+  return null;
+}
 function shouldShowHint(){return round.guesses.length>=3 || round.gameOver}
 function render(){
   USER=currentUser();
@@ -226,7 +308,7 @@ function render(){
 function renderLogin(){
   document.getElementById("app").innerHTML=`<div class="screen"><header class="header"><span class="title">${CONFIG.title}</span></header>
   <main class="main"><div class="card"><h2>로그인</h2><input id="nick" placeholder="닉네임"/><input id="pw" type="password" placeholder="비밀번호"/><button id="loginBtn">시작하기</button><div class="small">다시 들어와도 같은 닉네임+비밀번호로 로그인하면 이어풀기와 통계가 유지됨.</div></div></main></div>`;
-  $("loginBtn").onclick=()=>{const n=$("nick").value.trim(),p=$("pw").value.trim();if(!n||!p){alert("닉네임과 비밀번호를 입력해줘.");return}USER={nick:n,pw:p};saveCurrentUser(USER);data();resetRound();};
+  $("loginBtn").onclick=()=>{const n=$("nick").value.trim(),p=$("pw").value.trim();if(!n||!p){alert("닉네임과 비밀번호를 입력해줘.");return}USER={nick:n,pw:p};saveCurrentUser(USER);let d=data();d.visits=(d.visits||0)+1;let a=[];if(d.visits===1)a.push(addAch(d,'firstVisit'));if(d.visits===100)a.push(addAch(d,'visit100'));saveData(d);resetRound();setTimeout(()=>showAch(a.filter(Boolean)),200);};
 }
 function keyboardHtml(){return `<section class="keyboard-wrap"><div id="inputbar" class="inputbar">글자를 입력하세요</div><div class="keyboard-area"><div id="keyboard" class="keyboard"></div><div class="action-col"><button id="backBtn" class="action">←</button><button id="enterBtn" class="action enter">입력</button></div></div></section>`}
 function adminHtml(){return `<div id="adminModal" class="modal"><div class="card"><h2>관리자 설정</h2><input id="adminPw" type="password" placeholder="관리자 비밀번호"/>
@@ -250,16 +332,47 @@ function adminHtml(){return `<div id="adminModal" class="modal"><div class="card
     <div class="ach-edit-row"><label>4트 성공</label><input id="win_3" /></div>
     <div class="ach-edit-row"><label>5트 성공</label><input id="win_4" /></div>
     <div class="small" style="margin-top:12px">업적 추가</div>
-        <select id="achCond" class="admin-select">
-      <option value="firstTry">[일반] 1번 만에 성공</option>
-      <option value="fail1">[일반] 첫 실패</option>
-      <option value="fail2">[일반] 두 번째 실패</option>
+            <select id="achCond" class="admin-select">
+      <option value="firstClear">[일반] 첫 문제 클리어</option>
       <option value="streak3">[일반] 3연속 성공</option>
       <option value="streak5">[일반] 5연속 성공</option>
       <option value="streak10">[희귀] 10연속 성공</option>
+      <option value="streak20">[희귀] 20연속 성공</option>
+      <option value="streak30">[희귀] 30연속 성공</option>
       <option value="streak50">[영웅] 50연속 성공</option>
       <option value="streak100">[영웅] 100연속 성공</option>
       <option value="clear150">[전설] 150문제 클리어</option>
+      <option value="fail1">[일반] 첫 실패</option>
+      <option value="failStreak2">[일반] 2연속 실패</option>
+      <option value="failStreak3">[일반] 3연속 실패</option>
+      <option value="failStreak5">[희귀] 5연속 실패</option>
+      <option value="failStreak10">[영웅] 10연속 실패</option>
+      <option value="speed5">[희귀] 5초 안에 성공</option>
+      <option value="speed3">[희귀] 3초 안에 성공</option>
+      <option value="speed2">[영웅] 2초 안에 성공</option>
+      <option value="speed1">[전설] 1초 안에 성공</option>
+      <option value="noHintSuccess">[일반] 힌트 없이 성공</option>
+      <option value="noHint10">[희귀] 힌트 없이 10문제 연속</option>
+      <option value="hintSuccess">[일반] 힌트 보고 성공</option>
+      <option value="hintFail">[일반] 힌트 보고도 실패</option>
+      <option value="nearOne">[일반] 한 글자 차이</option>
+      <option value="waitSuccess">[일반] 10분 대기 후 성공</option>
+      <option value="revengeSuccess">[희귀] 실패 후 바로 성공</option>
+      <option value="firstTryStreak5">[희귀] 5문제 연속 첫 시도 성공</option>
+      <option value="firstTryStreak10">[영웅] 10문제 연속 첫 시도 성공</option>
+      <option value="firstPuzzle8">[일반] 첫 문제가 8글자</option>
+      <option value="lastPuzzle2">[일반] 마지막 문제가 2글자</option>
+      <option value="firstVisit">[일반] 첫 접속</option>
+      <option value="visit100">[희귀] 100번째 접속</option>
+      <option value="lateNight">[일반] 새벽 2~5시 플레이</option>
+      <option value="commute">[일반] 출근시간 8~9시</option>
+      <option value="lunch">[일반] 점심시간</option>
+      <option value="rainy">[일반] 비 오는 날/장마 단어</option>
+      <option value="christmas">[희귀] 크리스마스 접속</option>
+      <option value="birthday">[희귀] 생일 접속</option>
+      <option value="allNoHint">[전설] 전 문제 힌트 없이 클리어</option>
+      <option value="allFirstTry">[전설] 150문제 전부 첫 시도 성공</option>
+      <option value="perfect150">[전설] 150문제 100% 성공</option>
     </select>
     <input id="achMsg" placeholder="업적 문구 입력"/>
     <button id="addAchBtn" class="btn green">업적 추가</button>
@@ -305,14 +418,93 @@ function judge(g){
   for(let i=0;i<ans.length;i++){if(res[i]==="green")continue;for(let j=0;j<ans.length;j++)if(!used[j]&&g[i]===ans[j]){res[i]="yellow";used[j]=true;break}}
   return res;
 }
+
+function hammingDistance(a,b){
+  if(a.length!==b.length)return 999;
+  let n=0;
+  for(let i=0;i<a.length;i++)if(a[i]!==b[i])n++;
+  return n;
+}
+function checkTimeAchievements(d,a){
+  const now=new Date();
+  const h=now.getHours(), m=now.getMonth()+1, day=now.getDate();
+  if(h>=2&&h<5)a.push(addAch(d,"lateNight"));
+  if(h>=8&&h<9)a.push(addAch(d,"commute"));
+  if(h>=12&&h<13)a.push(addAch(d,"lunch"));
+  if(m===12&&day===25)a.push(addAch(d,"christmas"));
+  if(String(d.nick||"").includes("생일"))a.push(addAch(d,"birthday"));
+  const txt=(puzzle().answer+" "+(puzzle().hint||"")+" "+(puzzle().explain||""));
+  if(/비|장마|우산|소나기/.test(txt))a.push(addAch(d,"rainy"));
+}
+function checkLengthAchievements(d,a){
+  if(d.index===0 && answer().length>=8)a.push(addAch(d,"firstPuzzle8"));
+  if(d.index===PACK.length-1 && answer().length<=2)a.push(addAch(d,"lastPuzzle2"));
+}
 function submit(){
   const d=data();if(Date.now()<d.lockUntil||round.gameOver)return;
   if(round.current.length!==answer().length){$("msg").textContent=`${answer().length}칸을 모두 입력해줘.`;shake();return}
+  if(!round.startedAt)round.startedAt=Date.now();
   const beforeHint=shouldShowHint();
-  const g=[...round.current],res=judge(g);round.guesses.push(g);round.results.push(res);round.lastReveal=round.guesses.length-1;g.forEach((ch,i)=>setKey(ch,res[i]));round.current=[];
+  const g=[...round.current],res=judge(g);
+  round.guesses.push(g);round.results.push(res);round.lastReveal=round.guesses.length-1;g.forEach((ch,i)=>setKey(ch,res[i]));round.current=[];
   const ok=g.join("")===answer().join("");
-  if(ok){round.gameOver=true;d.success++;d.totalTries+=round.guesses.length;d.streak++;d.bestStreak=Math.max(d.bestStreak,d.streak);d.history.push({no:puzzle().no,ok:true,tries:round.guesses.length,at:Date.now()});let a=[];if(round.guesses.length===1){d.firstTry++;a.push(addAch(d,ACH.firstTry))}if(d.streak===3)a.push(addAch(d,ACH.streak3));if(d.streak===5)a.push(addAch(d,ACH.streak5));if(d.streak===10)a.push(addAch(d,ACH.streak10));if(d.streak===50)a.push(addAch(d,ACH.streak50));if(d.streak===100)a.push(addAch(d,ACH.streak100));if(d.index===PACK.length-1)a.push(addAch(d,ACH.clear150));saveData(d);$("msg").textContent=`${round.guesses.length}/${CONFIG.maxTries} 성공 🎉\n${CONFIG.winMessages[round.guesses.length-1]}`;showAch(a.filter(Boolean));endButtons(true);}
-  else if(round.guesses.length>=CONFIG.maxTries){round.gameOver=true;d.fail++;d.streak=0;d.lockUntil=Date.now()+CONFIG.lockMinutes*60*1000;d.history.push({no:puzzle().no,ok:false,tries:CONFIG.maxTries,at:Date.now()});let a=[];if(d.fail===1)a.push(addAch(d,ACH.fail1));if(d.fail===2)a.push(addAch(d,ACH.fail2));saveData(d);$("msg").textContent=CONFIG.loseMessage;showAch(a.filter(Boolean));$("explainBox").innerHTML=`<div class="explain">정답: ${esc(puzzle().answer)}<br>${esc(puzzle().explain||"해설이 등록되지 않았습니다.")}</div>`;endButtons(false);}
+  const elapsed=(Date.now()-(round.startedAt||Date.now()))/1000;
+  const usedHint=round.guesses.length>3;
+  let a=[];
+  checkTimeAchievements(d,a);
+  checkLengthAchievements(d,a);
+  if(ok){
+    round.gameOver=true;
+    d.success++;d.totalTries+=round.guesses.length;d.streak++;d.failStreak=0;d.bestStreak=Math.max(d.bestStreak,d.streak);
+    d.noHintStreak=usedHint?0:(d.noHintStreak+1);
+    d.firstTryStreak=round.guesses.length===1?(d.firstTryStreak+1):0;
+    d.history.push({no:puzzle().no,ok:true,tries:round.guesses.length,usedHint,elapsed,at:Date.now()});
+    a.push(addAch(d,"firstClear"));
+    if(round.guesses.length===1){d.firstTry++;a.push(addAch(d,"firstTry"))}
+    if(d.streak===3)a.push(addAch(d,"streak3"));
+    if(d.streak===5)a.push(addAch(d,"streak5"));
+    if(d.streak===10)a.push(addAch(d,"streak10"));
+    if(d.streak===20)a.push(addAch(d,"streak20"));
+    if(d.streak===30)a.push(addAch(d,"streak30"));
+    if(d.streak===50)a.push(addAch(d,"streak50"));
+    if(d.streak===100)a.push(addAch(d,"streak100"));
+    if(elapsed<=5)a.push(addAch(d,"speed5"));
+    if(elapsed<=3)a.push(addAch(d,"speed3"));
+    if(elapsed<=2)a.push(addAch(d,"speed2"));
+    if(elapsed<=1)a.push(addAch(d,"speed1"));
+    if(!usedHint)a.push(addAch(d,"noHintSuccess"));
+    if(d.noHintStreak===10)a.push(addAch(d,"noHint10"));
+    if(usedHint)a.push(addAch(d,"hintSuccess"));
+    if(d.wasLocked)a.push(addAch(d,"waitSuccess"));
+    if(d.lastFailed)a.push(addAch(d,"revengeSuccess"));
+    if(d.firstTryStreak===5)a.push(addAch(d,"firstTryStreak5"));
+    if(d.firstTryStreak===10)a.push(addAch(d,"firstTryStreak10"));
+    if(usedHint)d.allNoHint=false;
+    if(round.guesses.length!==1)d.allFirstTry=false;
+    if(d.index===PACK.length-1){
+      a.push(addAch(d,"clear150"));
+      if(d.allNoHint)a.push(addAch(d,"allNoHint"));
+      if(d.allFirstTry)a.push(addAch(d,"allFirstTry"));
+      if(d.allSuccess)a.push(addAch(d,"perfect150"));
+    }
+    d.wasLocked=false;d.lastFailed=false;
+    saveData(d);$("msg").textContent=`${round.guesses.length}/${CONFIG.maxTries} 성공 🎉\n${CONFIG.winMessages[round.guesses.length-1]}`;showAch(a.filter(Boolean));endButtons(true);
+  }
+  else if(round.guesses.length>=CONFIG.maxTries){
+    round.gameOver=true;
+    d.fail++;d.streak=0;d.firstTryStreak=0;d.noHintStreak=0;d.failStreak=(d.failStreak||0)+1;
+    d.lockUntil=Date.now()+CONFIG.lockMinutes*60*1000;d.wasLocked=true;d.lastFailed=true;d.allSuccess=false;d.allNoHint=false;d.allFirstTry=false;
+    const minDist=Math.min(...round.guesses.map(x=>hammingDistance(x,answer())));
+    d.history.push({no:puzzle().no,ok:false,tries:CONFIG.maxTries,usedHint,near:minDist,at:Date.now()});
+    a.push(addAch(d,"fail1"));
+    if(d.failStreak===2)a.push(addAch(d,"failStreak2"));
+    if(d.failStreak===3)a.push(addAch(d,"failStreak3"));
+    if(d.failStreak===5)a.push(addAch(d,"failStreak5"));
+    if(d.failStreak===10)a.push(addAch(d,"failStreak10"));
+    if(usedHint)a.push(addAch(d,"hintFail"));
+    if(minDist===1)a.push(addAch(d,"nearOne"));
+    saveData(d);$("msg").textContent=CONFIG.loseMessage;showAch(a.filter(Boolean));$("explainBox").innerHTML=`<div class="explain">정답: ${esc(puzzle().answer)}<br>${esc(puzzle().explain||"해설이 등록되지 않았습니다.")}</div>`;endButtons(false);
+  }
   else {$("msg").textContent=""; if(!beforeHint && shouldShowHint() && puzzle().hint) round.hintJustOpened=true;}
   if(round.hintJustOpened) render(); else {drawBoard();drawKeyboard();}
 }
@@ -333,7 +525,7 @@ function startLock(){
   tick();setInterval(tick,1000);
 }
 function nextPuzzle(){const d=data();if(Date.now()<d.lockUntil)return;d.index=d.index>=PACK.length-1?0:d.index+1;d.lockUntil=0;saveData(d);resetRound()}
-function resetRound(){round={guesses:[],results:[],current:[],keyStatus:{},gameOver:false,lastReveal:-1,hintJustOpened:false};render()}
+function resetRound(){round={guesses:[],results:[],current:[],keyStatus:{},gameOver:false,lastReveal:-1,hintJustOpened:false,startedAt:Date.now()};render()}
 function shareText(){
   const d=data(),ok=round.guesses.length&&round.guesses[round.guesses.length-1].join("")===answer().join("");
   return [`🎯 ${CONFIG.title} #${puzzle().no}`,`닉네임: ${d.nick}`,`진행률 ${d.index+1}/${PACK.length}`,"",new Date().toLocaleDateString("ko-KR"),"",...round.results.map(r=>r.map(x=>x==="green"?"🟩":x==="yellow"?"🟨":"⬜").join("")),"",ok?`${round.guesses.length}/5 성공 🎉`:"X/5 실패",ok?CONFIG.winMessages[round.guesses.length-1]:CONFIG.loseMessage,"",location.origin+location.pathname].join("\n");
@@ -342,9 +534,8 @@ function share(){const t=shareText();if(navigator.share)navigator.share({title:C
 function copy(t){navigator.clipboard.writeText(t).then(()=>$("msg").textContent="복사 완료").catch(()=>{$("sharebox").style.display="block";$("sharebox").textContent=t})}
 
 function achievementStats(d){
-  const msgs=d.ach||[];
   const available=Object.keys(ACH_META).filter(k=>ACH[k]);
-  const gotKeys=available.filter(k=>msgs.includes(ACH[k]));
+  const gotKeys=(d.achKeys&&d.achKeys.length)?d.achKeys.filter(k=>ACH[k]):available.filter(k=>(d.ach||[]).includes(ACH[k]));
   const result={};
   result["전체"]={got:gotKeys.length,total:available.length};
   ["일반","희귀","영웅","전설"].forEach(g=>{
@@ -357,6 +548,7 @@ function achievementStats(d){
 function openStats(){
   const d=data(),total=d.success+d.fail,avg=d.success?(d.totalTries/d.success).toFixed(2):"-";
   const s=achievementStats(d);
+  const got=(d.achKeys&&d.achKeys.length)?d.achKeys.filter(k=>ACH[k]):[];
   $("statsText").textContent=`닉네임: ${d.nick}
 진행률: ${d.index+1}/${PACK.length}
 성공: ${d.success}
@@ -374,7 +566,7 @@ function openStats(){
 전설: ${s["전설"].got} / ${s["전설"].total}
 
 획득 업적
-${d.ach.length?d.ach.map(x=>"・"+x).join("\\n"):"없음"}`;
+${got.length?got.map(k=>"・["+ACH_META[k].grade+"] "+ACH_META[k].label+" - "+ACH[k]).join("\\n"):(d.ach.length?d.ach.map(x=>"・"+x).join("\\n"):"없음")}`;
   $("statsModal").style.display="flex";
 }
 function openAdmin(){
