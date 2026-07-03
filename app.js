@@ -28,6 +28,63 @@ const enc=s=>btoa(unescape(encodeURIComponent(s)));
 const dec=s=>decodeURIComponent(escape(atob(s)));
 function hashParams(){const p={};(location.hash||"").replace(/^#/,"").split("&").forEach(x=>{const i=x.indexOf("=");if(i>-1)p[x.slice(0,i)]=x.slice(i+1);else if(x)p[x]=true});return p}
 function getHash(k){const v=hashParams()[k];if(!v||v===true)return null;try{return dec(decodeURIComponent(v))}catch(e){return null}}
+function defaultSettings(){return {winMessages:[...CONFIG.winMessages], ach:{...ACH}}}
+function loadSettings(){
+  const hp=getHash("cfg");
+  if(hp){
+    try{
+      const s=JSON.parse(hp);
+      localStorage.setItem("jamoSettings",JSON.stringify(s));
+      return s;
+    }catch(e){}
+  }
+  try{
+    const s=JSON.parse(localStorage.getItem("jamoSettings")||"null");
+    if(s)return s;
+  }catch(e){}
+  return defaultSettings();
+}
+function applySettings(){
+  const s=loadSettings();
+  if(Array.isArray(s.winMessages)&&s.winMessages.length){
+    for(let i=0;i<5;i++) CONFIG.winMessages[i]=s.winMessages[i]||CONFIG.winMessages[i];
+  }
+  if(s.ach && typeof s.ach==="object"){
+    Object.keys(s.ach).forEach(k=>{ if(ACH[k]!==undefined && s.ach[k]) ACH[k]=s.ach[k]; });
+  }
+}
+function getSettingsForLink(){
+  return {
+    winMessages:[...CONFIG.winMessages],
+    ach:{...ACH}
+  };
+}
+function achText(){
+  return [
+    `firstTry|${ACH.firstTry}`,
+    `fail1|${ACH.fail1}`,
+    `fail2|${ACH.fail2}`,
+    `streak3|${ACH.streak3}`,
+    `streak5|${ACH.streak5}`,
+    `streak10|${ACH.streak10}`,
+    `streak50|${ACH.streak50}`,
+    `streak100|${ACH.streak100}`,
+    `clear150|${ACH.clear150}`
+  ].join("\\n");
+}
+function parseAchText(text){
+  const out={};
+  String(text||"").split(/\\n+/).forEach(line=>{
+    const i=line.indexOf("|");
+    if(i>-1){
+      const k=line.slice(0,i).trim();
+      const v=line.slice(i+1).trim();
+      if(k && v) out[k]=v;
+    }
+  });
+  return out;
+}
+
 function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function hashString(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(36)}
 function decompose(str){
@@ -62,6 +119,7 @@ function loadPack(){
   try{const arr=JSON.parse(localStorage.getItem("jamoPack")||"null");if(Array.isArray(arr)&&arr.length)return arr}catch(e){}
   return DEFAULT_PUZZLES;
 }
+applySettings();
 let PACK=loadPack();
 let ADMIN_DRAFT=[...PACK];
 let PACK_ID=hashString(JSON.stringify(PACK));
@@ -110,7 +168,7 @@ function renderLogin(){
 }
 function keyboardHtml(){return `<section class="keyboard-wrap"><div id="inputbar" class="inputbar">글자를 입력하세요</div><div class="keyboard-area"><div id="keyboard" class="keyboard"></div><div class="action-col"><button id="backBtn" class="action">←</button><button id="enterBtn" class="action enter">입력</button></div></div></section>`}
 function adminHtml(){return `<div id="adminModal" class="modal"><div class="card"><h2>관리자 설정</h2><input id="adminPw" type="password" placeholder="관리자 비밀번호"/>
-  <div class="tabs"><button id="tabEasy" class="active">간편입력</button><button id="tabBulk">일괄입력</button></div>
+  <div class="tabs"><button id="tabEasy" class="active">간편입력</button><button id="tabBulk">일괄입력</button><button id="tabSetting">멘트/업적</button></div>
   <div id="easyBox">
     <div class="admin-row"><input id="aNo" placeholder="번호 예: 001"/><input id="aAnswer" placeholder="정답 예: 장마철"/></div>
     <input id="aHint" placeholder="힌트 예: 계절 관련 단어"/>
@@ -121,6 +179,12 @@ function adminHtml(){return `<div id="adminModal" class="modal"><div class="card
   <div id="bulkBox" style="display:none">
     <textarea id="packInput" placeholder="정답|힌트|문제번호|해설"></textarea>
     <div id="packPreview" class="small"></div>
+  </div>
+  <div id="settingBox" style="display:none">
+    <div class="small">성공 멘트는 1트~5트 순서로 한 줄씩 입력</div>
+    <textarea id="winMsgInput" placeholder="1트 성공 멘트\n2트 성공 멘트\n3트 성공 멘트\n4트 성공 멘트\n5트 성공 멘트"></textarea>
+    <div class="small">업적 문구는 key|문구 형식</div>
+    <textarea id="achInput" placeholder="firstTry|오늘은 운수대통!\nstreak3|이제 시작임 ㅋ"></textarea>
   </div>
   <button id="savePack">문제팩 저장</button>
   <button id="copyPack" class="btn blue">친구용 링크 복사</button>
@@ -188,7 +252,15 @@ function shareText(){
 function share(){const t=shareText();if(navigator.share)navigator.share({title:CONFIG.title,text:t}).catch(()=>copy(t));else copy(t)}
 function copy(t){navigator.clipboard.writeText(t).then(()=>$("msg").textContent="복사 완료").catch(()=>{$("sharebox").style.display="block";$("sharebox").textContent=t})}
 function openStats(){const d=data(),total=d.success+d.fail,avg=d.success?(d.totalTries/d.success).toFixed(2):"-";$("statsText").textContent=`닉네임: ${d.nick}\n진행률: ${d.index+1}/${PACK.length}\n성공: ${d.success}\n실패: ${d.fail}\n성공률: ${total?Math.round(d.success/total*100):0}%\n평균 시도횟수: ${avg}\n현재 연속 성공: ${d.streak}\n최고 연속 성공: ${d.bestStreak}\n1트 성공: ${d.firstTry}\n\n업적\n${d.ach.length?d.ach.map(x=>"・"+x).join("\n"):"없음"}`;$("statsModal").style.display="flex"}
-function openAdmin(){ADMIN_DRAFT=[...PACK];$("adminModal").style.display="flex";$("packInput").value=packText(ADMIN_DRAFT);renderPuzzleList();previewPack()}
+function openAdmin(){
+  ADMIN_DRAFT=[...PACK];
+  $("adminModal").style.display="flex";
+  $("packInput").value=packText(ADMIN_DRAFT);
+  if($("winMsgInput")) $("winMsgInput").value=CONFIG.winMessages.join("\n");
+  if($("achInput")) $("achInput").value=achText();
+  renderPuzzleList();
+  previewPack();
+}
 function previewPack(){$("packPreview").textContent=`등록 예정: ${parsePack($("packInput").value).length}문제 / 최대 ${CONFIG.maxPuzzles}문제`}
 function renderPuzzleList(){
   const list=$("puzzleList"); if(!list)return;
@@ -210,13 +282,22 @@ function savePack(){
   const activeBulk=$("bulkBox").style.display!=="none";
   const arr=activeBulk?parsePack($("packInput").value):ADMIN_DRAFT;
   if(!arr.length){alert("문제를 입력해줘.");return}
+  const winLines=($("winMsgInput")?.value||"").split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  const achMap=parseAchText($("achInput")?.value||"");
+  const settings={winMessages:CONFIG.winMessages.map((x,i)=>winLines[i]||x), ach:{...ACH,...achMap}};
+  localStorage.setItem("jamoSettings",JSON.stringify(settings));
+  applySettings();
   PACK=arr.slice(0,CONFIG.maxPuzzles);PACK_ID=hashString(JSON.stringify(PACK));localStorage.setItem("jamoPack",JSON.stringify(PACK));
   const d=data();d.index=0;d.lockUntil=0;saveData(d);$("adminModal").style.display="none";resetRound();alert("저장 완료")
 }
 function copyPack(){
   if(!checkAdmin())return;
   const arr=($("bulkBox").style.display!=="none")?parsePack($("packInput").value):ADMIN_DRAFT;
-  const link=`${location.origin+location.pathname}#pack=${encodeURIComponent(enc(JSON.stringify(arr)))}`;copy(link)
+  const winLines=($("winMsgInput")?.value||"").split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  const achMap=parseAchText($("achInput")?.value||"");
+  const settings={winMessages:CONFIG.winMessages.map((x,i)=>winLines[i]||x), ach:{...ACH,...achMap}};
+  const link=`${location.origin+location.pathname}#pack=${encodeURIComponent(enc(JSON.stringify(arr)))}&cfg=${encodeURIComponent(enc(JSON.stringify(settings)))}`;
+  copy(link)
 }
 function resetMe(){if(!checkAdmin())return;localStorage.clear();location.hash="";location.reload()}
 function bind(){
@@ -225,8 +306,9 @@ function bind(){
   $("shareBtn").onclick=share;$("nextBtn").onclick=nextPuzzle;$("statsBtn").onclick=openStats;$("logoutBtn").onclick=()=>{USER=null;SESSION_USER=null;renderLogin()};$("closeStats").onclick=()=>$("statsModal").style.display="none";
   $("closeAdmin").onclick=()=>$("adminModal").style.display="none";$("savePack").onclick=savePack;$("copyPack").onclick=copyPack;$("resetMe").onclick=resetMe;$("packInput").oninput=()=>{ADMIN_DRAFT=parsePack($("packInput").value);renderPuzzleList();previewPack();};
   $("addPuzzle").onclick=addPuzzle;
-  $("tabEasy").onclick=()=>{$("easyBox").style.display="block";$("bulkBox").style.display="none";$("tabEasy").classList.add("active");$("tabBulk").classList.remove("active");};
-  $("tabBulk").onclick=()=>{syncBulkFromDraft();$("easyBox").style.display="none";$("bulkBox").style.display="block";$("tabBulk").classList.add("active");$("tabEasy").classList.remove("active");previewPack();};
+  $("tabEasy").onclick=()=>{$("easyBox").style.display="block";$("bulkBox").style.display="none";$("settingBox").style.display="none";$("tabEasy").classList.add("active");$("tabBulk").classList.remove("active");$("tabSetting").classList.remove("active");};
+  $("tabBulk").onclick=()=>{syncBulkFromDraft();$("easyBox").style.display="none";$("bulkBox").style.display="block";$("settingBox").style.display="none";$("tabBulk").classList.add("active");$("tabEasy").classList.remove("active");$("tabSetting").classList.remove("active");previewPack();};
+  $("tabSetting").onclick=()=>{$("easyBox").style.display="none";$("bulkBox").style.display="none";$("settingBox").style.display="block";$("tabSetting").classList.add("active");$("tabEasy").classList.remove("active");$("tabBulk").classList.remove("active");};
   let taps=0,timer=null;$("titleTap").onclick=()=>{taps++;clearTimeout(timer);timer=setTimeout(()=>taps=0,1200);if(taps>=7){taps=0;openAdmin()}};
 }
 function shake(){const b=$("board");b.classList.remove("shake");void b.offsetWidth;b.classList.add("shake")}
