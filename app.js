@@ -184,7 +184,7 @@ function renderAchievementList(){
   const entries=achLabels()
     .filter(([key])=>ACH[key])
     .map(([key,label,grade])=>({key,label,grade,msg:ACH[key]}));
-  box.innerHTML=entries.length ? entries.map(({key,label,msg})=>`
+  box.innerHTML=entries.length ? entries.map(({key,label,grade,msg})=>`
     <div class="puzzle-item ach-list-item">
       <b>${esc(label)}</b>
       <div><b>${esc(msg)}</b><div class="puzzle-meta">${esc(grade||"일반")} · ${esc(key)}</div></div>
@@ -258,6 +258,7 @@ function data(){
     let d=JSON.parse(raw);
     const def=defaultData();
     Object.keys(def).forEach(k=>{if(d[k]===undefined)d[k]=def[k];});
+    if(!d.achKeys)d.achKeys=[];
     return d;
   }catch(e){}
   let d=defaultData();saveData(d);return d;
@@ -266,15 +267,19 @@ function saveData(d){localStorage.setItem(userKey(),JSON.stringify(d));saveCurre
 function puzzle(){const d=data();return PACK[Math.min(d.index,PACK.length-1)]||PACK[0]}
 function answer(){return decompose(puzzle().answer)}
 function addAch(d,key){
-  const msg=ACH[key];
+  const msg=ACH[key] || key;
   if(!msg)return null;
   if(!d.achKeys)d.achKeys=[];
   if(!d.ach)d.ach=[];
-  if(!d.achKeys.includes(key)){
-    d.achKeys.push(key);
-    d.ach.push(msg);
-    return msg;
+  if(ACH[key]){
+    if(!d.achKeys.includes(key)){
+      d.achKeys.push(key);
+      d.ach.push(msg);
+      return msg;
+    }
+    return null;
   }
+  if(!d.ach.includes(msg)){d.ach.push(msg);return msg}
   return null;
 }
 function shouldShowHint(){return round.guesses.length>=3 || round.gameOver}
