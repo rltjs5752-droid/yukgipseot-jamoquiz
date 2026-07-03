@@ -65,10 +65,10 @@ function loadPack(){
 let PACK=loadPack();
 let ADMIN_DRAFT=[...PACK];
 let PACK_ID=hashString(JSON.stringify(PACK));
-let USER=null, round={guesses:[],results:[],current:[],keyStatus:{},gameOver:false,lastReveal:-1,hintJustOpened:false};
+let USER=null, SESSION_USER=null, round={guesses:[],results:[],current:[],keyStatus:{},gameOver:false,lastReveal:-1,hintJustOpened:false};
 function userKey(){return `jamoUser_${PACK_ID}_${hashString(USER.nick+"|"+USER.pw)}`}
-function currentUser(){try{return JSON.parse(localStorage.getItem("jamoCurrentUser")||"null")}catch(e){return null}}
-function saveCurrentUser(u){localStorage.setItem("jamoCurrentUser",JSON.stringify({nick:u.nick,pw:u.pw}))}
+function currentUser(){return SESSION_USER}
+function saveCurrentUser(u){SESSION_USER={nick:u.nick,pw:u.pw}}
 function defaultData(){return{nick:USER.nick,pw:USER.pw,index:0,success:0,fail:0,totalTries:0,streak:0,bestStreak:0,firstTry:0,ach:[],lockUntil:0,history:[]}}
 function data(){let raw=localStorage.getItem(userKey());if(raw)try{return JSON.parse(raw)}catch(e){}let d=defaultData();saveData(d);return d}
 function saveData(d){localStorage.setItem(userKey(),JSON.stringify(d));saveCurrentUser(d)}
@@ -91,7 +91,7 @@ function render(){
       <div id="msg" class="msg"></div>
       <div id="achBox"></div>
       <div id="explainBox"></div>
-      <div class="controls"><button id="shareBtn" style="display:none">결과공유</button><button id="nextBtn" class="next" style="display:none">다음 문제</button><button id="statsBtn">통계</button></div>
+      <div class="controls"><button id="shareBtn" style="display:none">결과공유</button><button id="nextBtn" class="next" style="display:none">다음 문제</button><button id="statsBtn">통계</button><button id="logoutBtn">로그아웃</button></div>
       <div id="sharebox" class="sharebox"></div>
     </main>
     ${locked?"":keyboardHtml()}
@@ -105,7 +105,7 @@ function render(){
 }
 function renderLogin(){
   document.getElementById("app").innerHTML=`<div class="screen"><header class="header"><span class="title">${CONFIG.title}</span></header>
-  <main class="main"><div class="card"><h2>로그인</h2><input id="nick" placeholder="닉네임"/><input id="pw" type="password" placeholder="비밀번호"/><button id="loginBtn">시작하기</button><div class="small">같은 닉네임+비밀번호로 접속하면 이 기기에서 이어풀기와 통계가 유지됨.</div></div></main></div>`;
+  <main class="main"><div class="card"><h2>로그인</h2><input id="nick" placeholder="닉네임"/><input id="pw" type="password" placeholder="비밀번호"/><button id="loginBtn">시작하기</button><div class="small">다시 들어와도 같은 닉네임+비밀번호로 로그인하면 이어풀기와 통계가 유지됨.</div></div></main></div>`;
   $("loginBtn").onclick=()=>{const n=$("nick").value.trim(),p=$("pw").value.trim();if(!n||!p){alert("닉네임과 비밀번호를 입력해줘.");return}USER={nick:n,pw:p};saveCurrentUser(USER);data();resetRound();};
 }
 function keyboardHtml(){return `<section class="keyboard-wrap"><div id="inputbar" class="inputbar">글자를 입력하세요</div><div class="keyboard-area"><div id="keyboard" class="keyboard"></div><div class="action-col"><button id="backBtn" class="action">←</button><button id="enterBtn" class="action enter">입력</button></div></div></section>`}
@@ -222,7 +222,7 @@ function resetMe(){if(!checkAdmin())return;localStorage.clear();location.hash=""
 function bind(){
   if($("backBtn"))$("backBtn").onclick=back;
   if($("enterBtn"))$("enterBtn").onclick=submit;
-  $("shareBtn").onclick=share;$("nextBtn").onclick=nextPuzzle;$("statsBtn").onclick=openStats;$("closeStats").onclick=()=>$("statsModal").style.display="none";
+  $("shareBtn").onclick=share;$("nextBtn").onclick=nextPuzzle;$("statsBtn").onclick=openStats;$("logoutBtn").onclick=()=>{USER=null;SESSION_USER=null;renderLogin()};$("closeStats").onclick=()=>$("statsModal").style.display="none";
   $("closeAdmin").onclick=()=>$("adminModal").style.display="none";$("savePack").onclick=savePack;$("copyPack").onclick=copyPack;$("resetMe").onclick=resetMe;$("packInput").oninput=()=>{ADMIN_DRAFT=parsePack($("packInput").value);renderPuzzleList();previewPack();};
   $("addPuzzle").onclick=addPuzzle;
   $("tabEasy").onclick=()=>{$("easyBox").style.display="block";$("bulkBox").style.display="none";$("tabEasy").classList.add("active");$("tabBulk").classList.remove("active");};
