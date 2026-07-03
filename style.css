@@ -195,3 +195,53 @@ button,input,textarea{font-family:inherit}button{cursor:pointer}
   line-height:1.45;
   color:#fff;
 }
+
+
+/* V5.3.3 성공/실패 결과 카드 */
+.result-detail{
+  max-width:390px;
+  margin:0 auto 12px;
+  border-radius:16px;
+  padding:14px;
+  background:#f9fafb;
+  border:1px solid #e5e7eb;
+  text-align:center;
+  animation:fadeIn .25s ease;
+}
+.result-detail.success{
+  background:#f0fdf4;
+  border-color:#bbf7d0;
+}
+.result-detail.fail{
+  background:#fff7ed;
+  border-color:#fed7aa;
+}
+.result-title{
+  font-size:16px;
+  font-weight:900;
+  margin-bottom:8px;
+}
+.result-answer{
+  font-size:24px;
+  font-weight:1000;
+  margin:8px 0 12px;
+  letter-spacing:-.5px;
+}
+.result-section{
+  background:#fff;
+  border-radius:12px;
+  padding:10px;
+  margin-top:8px;
+  text-align:left;
+}
+.result-section b{
+  display:block;
+  font-size:13px;
+  margin-bottom:5px;
+}
+.result-section span{
+  display:block;
+  font-size:14px;
+  line-height:1.45;
+  color:#374151;
+}

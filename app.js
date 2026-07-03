@@ -508,7 +508,7 @@ function submit(){
       if(d.allSuccess)a.push(addAch(d,"perfect150"));
     }
     d.wasLocked=false;d.lastFailed=false;
-    saveData(d);$("msg").textContent=`${round.guesses.length}/${CONFIG.maxTries} 성공 🎉\n${CONFIG.winMessages[round.guesses.length-1]}`;showAch(a.filter(Boolean));endButtons(true);
+    saveData(d);$("msg").textContent=`${round.guesses.length}/${CONFIG.maxTries} 성공 🎉\n${CONFIG.winMessages[round.guesses.length-1]}`;showResultDetail(true);showAch(a.filter(Boolean));endButtons(true);
   }
   else if(round.guesses.length>=CONFIG.maxTries){
     round.gameOver=true;
@@ -523,10 +523,22 @@ function submit(){
     if(d.failStreak===10)a.push(addAch(d,"failStreak10"));
     if(usedHint)a.push(addAch(d,"hintFail"));
     if(minDist===1)a.push(addAch(d,"nearOne"));
-    saveData(d);$("msg").textContent=CONFIG.loseMessage;showAch(a.filter(Boolean));$("explainBox").innerHTML=`<div class="explain">정답: ${esc(puzzle().answer)}<br>${esc(puzzle().explain||"해설이 등록되지 않았습니다.")}</div>`;endButtons(false);
+    saveData(d);$("msg").textContent=CONFIG.loseMessage;showResultDetail(false);showAch(a.filter(Boolean));endButtons(false);
   }
   else {$("msg").textContent=""; if(!beforeHint && shouldShowHint() && puzzle().hint) round.hintJustOpened=true;}
   if(round.hintJustOpened) render(); else {drawBoard();drawKeyboard();}
+}
+
+function showResultDetail(success){
+  const p=puzzle();
+  const title=success ? "🎉 정답!" : "❌ 실패";
+  const answerText=success ? `🎉 ${esc(p.answer)}` : `정답: ${esc(p.answer)}`;
+  $("explainBox").innerHTML=`<div class="result-detail ${success?"success":"fail"}">
+    <div class="result-title">${title}</div>
+    <div class="result-answer">${answerText}</div>
+    ${p.hint?`<div class="result-section"><b>💡 힌트</b><span>${esc(p.hint)}</span></div>`:""}
+    <div class="result-section"><b>📖 해설</b><span>${esc(p.explain||"해설이 등록되지 않았습니다.")}</span></div>
+  </div>`;
 }
 function showAch(arr){
   arr=arr.filter(Boolean);
