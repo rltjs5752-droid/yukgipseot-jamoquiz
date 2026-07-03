@@ -106,11 +106,41 @@ function renderAchievementEditor(){
   `).join("");
 }
 function readAchievementEditor(){
-  const out={};
-  document.querySelectorAll("[data-achkey]").forEach(el=>{
-    out[el.dataset.achkey]=el.value.trim();
+  return {...ACH};
+}
+
+function achLabelByKey(key){
+  const row=achLabels().find(x=>x[0]===key);
+  return row ? row[1] : key;
+}
+function renderAchievementList(){
+  const box=$("achEditor");
+  if(!box) return;
+  const entries=achLabels()
+    .filter(([key])=>ACH[key])
+    .map(([key,label])=>({key,label,msg:ACH[key]}));
+  box.innerHTML=entries.length ? entries.map(({key,label,msg})=>`
+    <div class="puzzle-item ach-list-item">
+      <b>${esc(label)}</b>
+      <div><b>${esc(msg)}</b><div class="puzzle-meta">${esc(key)}</div></div>
+      <button data-achdel="${key}">삭제</button>
+    </div>
+  `).join("") : `<div class="small" style="padding:12px">등록된 업적 문구가 없음</div>`;
+  box.querySelectorAll("button[data-achdel]").forEach(btn=>{
+    btn.onclick=()=>{
+      ACH[btn.dataset.achdel]="";
+      renderAchievementList();
+    };
   });
-  return out;
+}
+function addAchievementFromAdmin(){
+  const key=$("achCond")?.value;
+  const msg=$("achMsg")?.value.trim();
+  if(!key){alert("업적 조건을 선택해줘.");return}
+  if(!msg){alert("업적 문구를 입력해줘.");return}
+  ACH[key]=msg;
+  $("achMsg").value="";
+  renderAchievementList();
 }
 
 
@@ -161,7 +191,7 @@ function data(){let raw=localStorage.getItem(userKey());if(raw)try{return JSON.p
 function saveData(d){localStorage.setItem(userKey(),JSON.stringify(d));saveCurrentUser(d)}
 function puzzle(){const d=data();return PACK[Math.min(d.index,PACK.length-1)]||PACK[0]}
 function answer(){return decompose(puzzle().answer)}
-function addAch(d,msg){if(!d.ach.includes(msg)){d.ach.push(msg);return msg}return null}
+function addAch(d,msg){if(!msg)return null;if(!d.ach.includes(msg)){d.ach.push(msg);return msg}return null}
 function shouldShowHint(){return round.guesses.length>=3 || round.gameOver}
 function render(){
   USER=currentUser();
@@ -216,8 +246,21 @@ function adminHtml(){return `<div id="adminModal" class="modal"><div class="card
     <div class="ach-edit-row"><label>3트 성공</label><input id="win_2" /></div>
     <div class="ach-edit-row"><label>4트 성공</label><input id="win_3" /></div>
     <div class="ach-edit-row"><label>5트 성공</label><input id="win_4" /></div>
-    <div class="small" style="margin-top:12px">업적 문구</div>
-    <div id="achEditor"></div>
+    <div class="small" style="margin-top:12px">업적 추가</div>
+    <select id="achCond" class="admin-select">
+      <option value="firstTry">1번 만에 성공</option>
+      <option value="fail1">첫 실패</option>
+      <option value="fail2">두 번째 실패</option>
+      <option value="streak3">3연속 성공</option>
+      <option value="streak5">5연속 성공</option>
+      <option value="streak10">10연속 성공</option>
+      <option value="streak50">50연속 성공</option>
+      <option value="streak100">100연속 성공</option>
+      <option value="clear150">150문제 클리어</option>
+    </select>
+    <input id="achMsg" placeholder="업적 문구 입력"/>
+    <button id="addAchBtn" class="btn green">업적 추가</button>
+    <div id="achEditor" class="puzzle-list"></div>
   </div>
     <button id="savePack">문제팩 저장</button>
   <button id="copyPack" class="btn blue">친구용 링크 복사</button>
@@ -271,6 +314,7 @@ function submit(){
   if(round.hintJustOpened) render(); else {drawBoard();drawKeyboard();}
 }
 function showAch(arr){
+  arr=arr.filter(Boolean);
   if(arr.length){
     $("achBox").innerHTML=arr.map(x=>`<div class="ach">업적 달성: ${esc(x)}</div>`).join("");
     const pop=document.createElement("div");
@@ -299,7 +343,7 @@ function openAdmin(){
   $("adminModal").style.display="flex";
   $("packInput").value=packText(ADMIN_DRAFT);
   for(let i=0;i<5;i++){ if($("win_"+i)) $("win_"+i).value=CONFIG.winMessages[i]||""; }
-  if($("achEditor")) $("achEditor").innerHTML=renderAchievementEditor();
+  renderAchievementList();
   renderPuzzleList();
   previewPack();
 }
@@ -348,6 +392,7 @@ function bind(){
   $("shareBtn").onclick=share;$("nextBtn").onclick=nextPuzzle;$("statsBtn").onclick=openStats;$("logoutBtn").onclick=()=>{USER=null;SESSION_USER=null;renderLogin()};$("closeStats").onclick=()=>$("statsModal").style.display="none";
   $("closeAdmin").onclick=()=>$("adminModal").style.display="none";$("savePack").onclick=savePack;$("copyPack").onclick=copyPack;$("resetMe").onclick=resetMe;$("packInput").oninput=()=>{ADMIN_DRAFT=parsePack($("packInput").value);renderPuzzleList();previewPack();};
   $("addPuzzle").onclick=addPuzzle;
+  $("addAchBtn").onclick=addAchievementFromAdmin;
   $("tabEasy").onclick=()=>{$("easyBox").style.display="block";$("bulkBox").style.display="none";$("settingBox").style.display="none";$("tabEasy").classList.add("active");$("tabBulk").classList.remove("active");$("tabSetting").classList.remove("active");};
   $("tabBulk").onclick=()=>{syncBulkFromDraft();$("easyBox").style.display="none";$("bulkBox").style.display="block";$("settingBox").style.display="none";$("tabBulk").classList.add("active");$("tabEasy").classList.remove("active");$("tabSetting").classList.remove("active");previewPack();};
   $("tabSetting").onclick=()=>{$("easyBox").style.display="none";$("bulkBox").style.display="none";$("settingBox").style.display="block";$("tabSetting").classList.add("active");$("tabEasy").classList.remove("active");$("tabBulk").classList.remove("active");};

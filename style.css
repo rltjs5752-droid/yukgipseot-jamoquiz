@@ -57,3 +57,17 @@ button,input,textarea{font-family:inherit}button{cursor:pointer}
   85%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
   100%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.98)}
 }
+
+.admin-select{
+  width:100%;
+  border:1px solid #d1d5db;
+  border-radius:12px;
+  padding:12px;
+  margin:6px 0 10px;
+  font-size:16px;
+  background:#fff;
+  font-family:inherit;
+}
+.ach-list-item{
+  grid-template-columns:86px 1fr 46px;
+}
