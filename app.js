@@ -125,13 +125,28 @@ function applySettings(){
     for(let i=0;i<5;i++) CONFIG.winMessages[i]=s.winMessages[i]||CONFIG.winMessages[i];
   }
   if(s.ach && typeof s.ach==="object"){
-    Object.keys(s.ach).forEach(k=>{ if(ACH[k]!==undefined && s.ach[k]) ACH[k]=s.ach[k]; });
+    Object.keys(s.ach).forEach(k=>{
+      if(ACH[k]!==undefined && s.ach[k]!==undefined) ACH[k]=s.ach[k];
+    });
+  }
+  if(Array.isArray(s.disabledAch)){
+    s.disabledAch.forEach(k=>{ if(ACH[k]!==undefined) ACH[k]=""; });
   }
 }
 function getSettingsForLink(){
   return {
     winMessages:[...CONFIG.winMessages],
-    ach:{...ACH}
+    ach:{...ACH},
+    disabledAch:Object.keys(ACH).filter(k=>!ACH[k])
+  };
+}
+function makeAdminSettings(){
+  const winLines=[0,1,2,3,4].map(i=>($("win_"+i)?.value||"").trim());
+  const achMap=readAchievementEditor();
+  return {
+    winMessages:CONFIG.winMessages.map((x,i)=>winLines[i]||x),
+    ach:{...ACH,...achMap},
+    disabledAch:Object.keys({...ACH,...achMap}).filter(k=>!({...ACH,...achMap})[k])
   };
 }
 function achText(){
@@ -604,9 +619,7 @@ function savePack(){
   const activeBulk=$("bulkBox").style.display!=="none";
   const arr=activeBulk?parsePack($("packInput").value):ADMIN_DRAFT;
   if(!arr.length){alert("문제를 입력해줘.");return}
-  const winLines=[0,1,2,3,4].map(i=>($("win_"+i)?.value||"").trim());
-  const achMap=readAchievementEditor();
-  const settings={winMessages:CONFIG.winMessages.map((x,i)=>winLines[i]||x), ach:{...ACH,...achMap}};
+  const settings=makeAdminSettings();
   localStorage.setItem("jamoSettings",JSON.stringify(settings));
   applySettings();
   PACK=arr.slice(0,CONFIG.maxPuzzles);PACK_ID=hashString(JSON.stringify(PACK));localStorage.setItem("jamoPack",JSON.stringify(PACK));
@@ -615,9 +628,7 @@ function savePack(){
 function copyPack(){
   if(!checkAdmin())return;
   const arr=($("bulkBox").style.display!=="none")?parsePack($("packInput").value):ADMIN_DRAFT;
-  const winLines=[0,1,2,3,4].map(i=>($("win_"+i)?.value||"").trim());
-  const achMap=readAchievementEditor();
-  const settings={winMessages:CONFIG.winMessages.map((x,i)=>winLines[i]||x), ach:{...ACH,...achMap}};
+  const settings=makeAdminSettings();
   const link=`${location.origin+location.pathname}#pack=${encodeURIComponent(enc(JSON.stringify(arr)))}&cfg=${encodeURIComponent(enc(JSON.stringify(settings)))}`;
   copy(link)
 }
