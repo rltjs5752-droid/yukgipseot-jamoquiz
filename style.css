@@ -71,3 +71,8 @@ button,input,textarea{font-family:inherit}button{cursor:pointer}
 .ach-list-item{
   grid-template-columns:86px 1fr 46px;
 }
+
+/* V5.2.1 */
+.puzzle-meta{
+  word-break:keep-all;
+}

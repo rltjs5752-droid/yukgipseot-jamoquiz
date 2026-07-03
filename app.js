@@ -16,6 +16,19 @@ const ACH={
   streak100:"마지막을 향해 서두르세요. 보상이 있습니다.",
   clear150:"이 또한, 추억이다. 앞으로도 함께할 수 있는 시간이 많기를.. 건강하자"
 };
+
+const ACH_META={
+  firstTry:{label:"1번 만에 성공",grade:"일반"},
+  fail1:{label:"첫 실패",grade:"일반"},
+  fail2:{label:"두 번째 실패",grade:"일반"},
+  streak3:{label:"3연속 성공",grade:"일반"},
+  streak5:{label:"5연속 성공",grade:"일반"},
+  streak10:{label:"10연속 성공",grade:"희귀"},
+  streak50:{label:"50연속 성공",grade:"영웅"},
+  streak100:{label:"100연속 성공",grade:"영웅"},
+  clear150:{label:"150문제 클리어",grade:"전설"}
+};
+
 const DEFAULT_PUZZLES=[
   {answer:"장마철",hint:"계절 관련 단어",no:"001",explain:"장마가 계속되는 시기."},
   {answer:"태양",hint:"하늘에 있음",no:"002",explain:"스스로 빛을 내는 항성."},
@@ -85,17 +98,7 @@ function parseAchText(text){
   return out;
 }
 function achLabels(){
-  return [
-    ["firstTry","1번 만에 성공"],
-    ["fail1","첫 실패"],
-    ["fail2","두 번째 실패"],
-    ["streak3","3연속 성공"],
-    ["streak5","5연속 성공"],
-    ["streak10","10연속 성공"],
-    ["streak50","50연속 성공"],
-    ["streak100","100연속 성공"],
-    ["clear150","150문제 클리어"]
-  ];
+  return Object.keys(ACH_META).map(key=>[key,ACH_META[key].label,ACH_META[key].grade]);
 }
 function renderAchievementEditor(){
   return achLabels().map(([key,label])=>`
@@ -118,11 +121,11 @@ function renderAchievementList(){
   if(!box) return;
   const entries=achLabels()
     .filter(([key])=>ACH[key])
-    .map(([key,label])=>({key,label,msg:ACH[key]}));
+    .map(([key,label,grade])=>({key,label,grade,msg:ACH[key]}));
   box.innerHTML=entries.length ? entries.map(({key,label,msg})=>`
     <div class="puzzle-item ach-list-item">
       <b>${esc(label)}</b>
-      <div><b>${esc(msg)}</b><div class="puzzle-meta">${esc(key)}</div></div>
+      <div><b>${esc(msg)}</b><div class="puzzle-meta">${esc(grade||"일반")} · ${esc(key)}</div></div>
       <button data-achdel="${key}">삭제</button>
     </div>
   `).join("") : `<div class="small" style="padding:12px">등록된 업적 문구가 없음</div>`;
@@ -247,16 +250,16 @@ function adminHtml(){return `<div id="adminModal" class="modal"><div class="card
     <div class="ach-edit-row"><label>4트 성공</label><input id="win_3" /></div>
     <div class="ach-edit-row"><label>5트 성공</label><input id="win_4" /></div>
     <div class="small" style="margin-top:12px">업적 추가</div>
-    <select id="achCond" class="admin-select">
-      <option value="firstTry">1번 만에 성공</option>
-      <option value="fail1">첫 실패</option>
-      <option value="fail2">두 번째 실패</option>
-      <option value="streak3">3연속 성공</option>
-      <option value="streak5">5연속 성공</option>
-      <option value="streak10">10연속 성공</option>
-      <option value="streak50">50연속 성공</option>
-      <option value="streak100">100연속 성공</option>
-      <option value="clear150">150문제 클리어</option>
+        <select id="achCond" class="admin-select">
+      <option value="firstTry">[일반] 1번 만에 성공</option>
+      <option value="fail1">[일반] 첫 실패</option>
+      <option value="fail2">[일반] 두 번째 실패</option>
+      <option value="streak3">[일반] 3연속 성공</option>
+      <option value="streak5">[일반] 5연속 성공</option>
+      <option value="streak10">[희귀] 10연속 성공</option>
+      <option value="streak50">[영웅] 50연속 성공</option>
+      <option value="streak100">[영웅] 100연속 성공</option>
+      <option value="clear150">[전설] 150문제 클리어</option>
     </select>
     <input id="achMsg" placeholder="업적 문구 입력"/>
     <button id="addAchBtn" class="btn green">업적 추가</button>
@@ -337,7 +340,43 @@ function shareText(){
 }
 function share(){const t=shareText();if(navigator.share)navigator.share({title:CONFIG.title,text:t}).catch(()=>copy(t));else copy(t)}
 function copy(t){navigator.clipboard.writeText(t).then(()=>$("msg").textContent="복사 완료").catch(()=>{$("sharebox").style.display="block";$("sharebox").textContent=t})}
-function openStats(){const d=data(),total=d.success+d.fail,avg=d.success?(d.totalTries/d.success).toFixed(2):"-";$("statsText").textContent=`닉네임: ${d.nick}\n진행률: ${d.index+1}/${PACK.length}\n성공: ${d.success}\n실패: ${d.fail}\n성공률: ${total?Math.round(d.success/total*100):0}%\n평균 시도횟수: ${avg}\n현재 연속 성공: ${d.streak}\n최고 연속 성공: ${d.bestStreak}\n1트 성공: ${d.firstTry}\n\n업적\n${d.ach.length?d.ach.map(x=>"・"+x).join("\n"):"없음"}`;$("statsModal").style.display="flex"}
+
+function achievementStats(d){
+  const msgs=d.ach||[];
+  const available=Object.keys(ACH_META).filter(k=>ACH[k]);
+  const gotKeys=available.filter(k=>msgs.includes(ACH[k]));
+  const result={};
+  result["전체"]={got:gotKeys.length,total:available.length};
+  ["일반","희귀","영웅","전설"].forEach(g=>{
+    const total=available.filter(k=>ACH_META[k].grade===g).length;
+    const got=gotKeys.filter(k=>ACH_META[k].grade===g).length;
+    result[g]={got,total};
+  });
+  return result;
+}
+function openStats(){
+  const d=data(),total=d.success+d.fail,avg=d.success?(d.totalTries/d.success).toFixed(2):"-";
+  const s=achievementStats(d);
+  $("statsText").textContent=`닉네임: ${d.nick}
+진행률: ${d.index+1}/${PACK.length}
+성공: ${d.success}
+실패: ${d.fail}
+성공률: ${total?Math.round(d.success/total*100):0}%
+평균 시도횟수: ${avg}
+현재 연속 성공: ${d.streak}
+최고 연속 성공: ${d.bestStreak}
+1트 성공: ${d.firstTry}
+
+업적 통계: ${s["전체"].got} / ${s["전체"].total}
+일반: ${s["일반"].got} / ${s["일반"].total}
+희귀: ${s["희귀"].got} / ${s["희귀"].total}
+영웅: ${s["영웅"].got} / ${s["영웅"].total}
+전설: ${s["전설"].got} / ${s["전설"].total}
+
+획득 업적
+${d.ach.length?d.ach.map(x=>"・"+x).join("\\n"):"없음"}`;
+  $("statsModal").style.display="flex";
+}
 function openAdmin(){
   ADMIN_DRAFT=[...PACK];
   $("adminModal").style.display="flex";
