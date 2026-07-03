@@ -100,14 +100,44 @@ function judge(guess){
   }
   return res;
 }
+function getTodayText(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}.${m}.${day}`;
+}
+
+function getChallengeLink(){
+  const base = location.origin + location.pathname;
+  const raw = getRawAnswer();
+  const params = [`q=${encodeURIComponent(b64EncodeUnicode(raw))}`];
+  const no = getPuzzleNo();
+  const hint = getHint();
+  if(no) params.push(`no=${encodeURIComponent(b64EncodeUnicode(no))}`);
+  if(hint) params.push(`hint=${encodeURIComponent(b64EncodeUnicode(hint))}`);
+  return `${base}#${params.join("&")}`;
+}
+
 function getResultText(){
   const success = guesses.length && guesses[guesses.length-1].join("") === ANSWER.join("");
   const no = getPuzzleNo();
-  const lines = [`🎯 ${CONFIG.title}${no ? " #"+no : ""}`,""];
-  results.forEach(r=>lines.push(emojiRow(r)));
-  lines.push("");
-  lines.push(success ? `${guesses.length}/${CONFIG.maxTries} 성공` : `실패 ${CONFIG.loseMessage}`);
-  if(success) lines.push(CONFIG.winMessages[guesses.length-1]);
+  const title = `🎯 ${CONFIG.title}${no ? " #"+no : ""}`;
+  const tries = success ? `${guesses.length}/${CONFIG.maxTries} 성공 🎉` : `X/${CONFIG.maxTries} 실패`;
+  const level = success ? CONFIG.winMessages[guesses.length-1] : CONFIG.loseMessage;
+  const lines = [
+    title,
+    "",
+    `📅 ${getTodayText()}`,
+    "",
+    ...results.map(r => emojiRow(r)),
+    "",
+    tries,
+    level,
+    "",
+    "도전하기👇",
+    getChallengeLink()
+  ];
   return lines.join("\n");
 }
 
