@@ -532,11 +532,13 @@ function showAch(arr){
   arr=arr.filter(Boolean);
   if(arr.length){
     $("achBox").innerHTML=arr.map(x=>`<div class="ach">업적 달성: ${esc(x)}</div>`).join("");
+    const key=Object.keys(ACH).find(k=>ACH[k]===arr[0]);
+    const meta=key?(ACH_META[key]||{label:"업적",grade:"일반"}):{label:"업적",grade:"일반"};
     const pop=document.createElement("div");
-    pop.className="ach-popup";
-    pop.innerHTML=`🏆 업적 달성!<b>${esc(arr[0])}</b>`;
+    pop.className="ach-popup big";
+    pop.innerHTML=`<div class="pop-title">🎉 업적 달성!</div><div class="pop-grade">${gradeIcon(meta.grade)} ${esc(meta.grade)}</div><b>${esc(meta.label)}</b><p>${esc(arr[0])}</p>`;
     document.body.appendChild(pop);
-    setTimeout(()=>pop.remove(),1900);
+    setTimeout(()=>pop.remove(),2200);
   }
 }
 function endButtons(ok){$("shareBtn").style.display="block";$("nextBtn").style.display="block";if(!ok){$("nextBtn").disabled=true;$("nextBtn").textContent="10분 대기 중"}else $("nextBtn").textContent=data().index>=PACK.length-1?"처음부터":"다음 문제"}
@@ -565,28 +567,80 @@ function achievementStats(d){
   });
   return result;
 }
+
+function gradeIcon(g){
+  return g==="일반"?"⚪":g==="희귀"?"🔵":g==="영웅"?"🟣":g==="전설"?"🟡":"🏅";
+}
+function progressBar(got,total){
+  const n=total?Math.round((got/total)*10):0;
+  return "█".repeat(n)+"░".repeat(10-n);
+}
+function achievementCards(d){
+  const keys=(d.achKeys&&d.achKeys.length)?d.achKeys.filter(k=>ACH[k]):[];
+  if(!keys.length && d.ach && d.ach.length){
+    return `<div class="empty-ach">`+d.ach.map(x=>`・${esc(x)}`).join("<br>")+`</div>`;
+  }
+  if(!keys.length)return `<div class="empty-ach">없음</div>`;
+  return keys.map(k=>{
+    const meta=ACH_META[k]||{label:k,grade:"일반"};
+    return `<div class="ach-card grade-${meta.grade}">
+      <div class="ach-grade">${gradeIcon(meta.grade)} ${esc(meta.grade)}</div>
+      <div class="ach-name">${esc(meta.label)}</div>
+      <div class="ach-msg">${esc(ACH[k])}</div>
+    </div>`;
+  }).join("");
+}
+function recentAchievementCards(d){
+  const keys=(d.achKeys&&d.achKeys.length)?d.achKeys.filter(k=>ACH[k]).slice(-3).reverse():[];
+  if(!keys.length)return `<div class="empty-ach">최근 획득 업적 없음</div>`;
+  return keys.map((k,i)=>{
+    const meta=ACH_META[k]||{label:k,grade:"일반"};
+    return `<div class="ach-card recent grade-${meta.grade}">
+      <div class="ach-grade">${gradeIcon(meta.grade)} ${esc(meta.grade)}</div>
+      <div class="ach-name">${esc(meta.label)}</div>
+      <div class="ach-msg">${esc(ACH[k])}</div>
+      <div class="ach-time">${i===0?"방금/최근":""}</div>
+    </div>`;
+  }).join("");
+}
+function achievementProgressHtml(s){
+  const rows=[
+    ["전체","🏆",s["전체"]],
+    ["일반","⚪",s["일반"]],
+    ["희귀","🔵",s["희귀"]],
+    ["영웅","🟣",s["영웅"]],
+    ["전설","🟡",s["전설"]]
+  ];
+  return rows.map(([label,icon,v])=>`
+    <div class="ach-progress-row">
+      <div class="ach-progress-head"><b>${icon} ${label}</b><span>${v.got} / ${v.total}</span></div>
+      <div class="ach-bar">${progressBar(v.got,v.total)}</div>
+    </div>
+  `).join("");
+}
 function openStats(){
   const d=data(),total=d.success+d.fail,avg=d.success?(d.totalTries/d.success).toFixed(2):"-";
   const s=achievementStats(d);
-  const got=(d.achKeys&&d.achKeys.length)?d.achKeys.filter(k=>ACH[k]):[];
-  $("statsText").textContent=`닉네임: ${d.nick}
-진행률: ${d.index+1}/${PACK.length}
-성공: ${d.success}
-실패: ${d.fail}
-성공률: ${total?Math.round(d.success/total*100):0}%
-평균 시도횟수: ${avg}
-현재 연속 성공: ${d.streak}
-최고 연속 성공: ${d.bestStreak}
-1트 성공: ${d.firstTry}
+  $("statsText").innerHTML=`<div class="stat-summary">
+    <div><b>닉네임</b><span>${esc(d.nick)}</span></div>
+    <div><b>진행률</b><span>${d.index+1}/${PACK.length}</span></div>
+    <div><b>성공</b><span>${d.success}</span></div>
+    <div><b>실패</b><span>${d.fail}</span></div>
+    <div><b>성공률</b><span>${total?Math.round(d.success/total*100):0}%</span></div>
+    <div><b>평균 시도횟수</b><span>${avg}</span></div>
+    <div><b>현재 연속 성공</b><span>${d.streak}</span></div>
+    <div><b>최고 연속 성공</b><span>${d.bestStreak}</span></div>
+    <div><b>1트 성공</b><span>${d.firstTry}</span></div>
+  </div>
 
-업적 통계: ${s["전체"].got} / ${s["전체"].total}
-일반: ${s["일반"].got} / ${s["일반"].total}
-희귀: ${s["희귀"].got} / ${s["희귀"].total}
-영웅: ${s["영웅"].got} / ${s["영웅"].total}
-전설: ${s["전설"].got} / ${s["전설"].total}
+  <h3 class="stats-title">🏆 업적 진행도</h3>
+  <div class="ach-progress">${achievementProgressHtml(s)}</div>
 
-획득 업적
-${got.length?got.map(k=>"・["+ACH_META[k].grade+"] "+ACH_META[k].label+" - "+ACH[k]).join("\\n"):(d.ach.length?d.ach.map(x=>"・"+x).join("\\n"):"없음")}`;
+  <h3 class="stats-title">🆕 최근 획득</h3>
+  <div class="ach-card-wrap">${recentAchievementCards(d)}</div>
+
+  <h3 class="stats-title">획득 업적</h3>
+  <div class="ach-card-wrap">${achievementCards(d)}</div>`;
   $("statsModal").style.display="flex";
 }
 function openAdmin(){

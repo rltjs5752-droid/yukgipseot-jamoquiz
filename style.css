@@ -76,3 +76,122 @@ button,input,textarea{font-family:inherit}button{cursor:pointer}
 .puzzle-meta{
   word-break:keep-all;
 }
+
+
+/* V5.3.2 통계/업적 UI */
+.stat-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:14px;
+}
+.stat-summary div{
+  background:#f3f4f6;
+  border-radius:10px;
+  padding:9px;
+}
+.stat-summary b{
+  display:block;
+  font-size:12px;
+  color:#6b7280;
+  margin-bottom:3px;
+}
+.stat-summary span{
+  font-size:15px;
+  font-weight:900;
+  color:#111827;
+}
+.stats-title{
+  font-size:15px;
+  margin:18px 0 8px;
+}
+.ach-progress{
+  display:grid;
+  gap:8px;
+}
+.ach-progress-row{
+  background:#f9fafb;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:10px;
+}
+.ach-progress-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:13px;
+}
+.ach-progress-head span{
+  font-weight:900;
+}
+.ach-bar{
+  margin-top:6px;
+  letter-spacing:1px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:#111827;
+}
+.ach-card-wrap{
+  display:grid;
+  gap:9px;
+}
+.ach-card{
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  padding:11px;
+  background:#ffffff;
+  box-shadow:0 1px 0 rgba(0,0,0,.02);
+}
+.ach-card.grade-일반{border-left:6px solid #9ca3af}
+.ach-card.grade-희귀{border-left:6px solid #3b82f6}
+.ach-card.grade-영웅{border-left:6px solid #8b5cf6}
+.ach-card.grade-전설{border-left:6px solid #f59e0b}
+.ach-grade{
+  font-size:12px;
+  font-weight:900;
+  color:#6b7280;
+  margin-bottom:4px;
+}
+.ach-name{
+  font-size:15px;
+  font-weight:900;
+  color:#111827;
+}
+.ach-msg{
+  margin-top:4px;
+  font-size:13px;
+  line-height:1.45;
+  color:#374151;
+}
+.ach-time{
+  margin-top:5px;
+  font-size:11px;
+  color:#9ca3af;
+}
+.empty-ach{
+  background:#f3f4f6;
+  border-radius:12px;
+  padding:12px;
+  color:#6b7280;
+  line-height:1.5;
+}
+.ach-popup.big{
+  padding:18px;
+  animation:achPop 2.1s ease both;
+}
+.ach-popup .pop-title{
+  font-size:14px;
+  font-weight:900;
+  color:#fef3c7;
+}
+.ach-popup .pop-grade{
+  margin-top:8px;
+  font-size:13px;
+  font-weight:900;
+  color:#d1d5db;
+}
+.ach-popup p{
+  margin:8px 0 0;
+  font-size:14px;
+  line-height:1.45;
+  color:#fff;
+}
